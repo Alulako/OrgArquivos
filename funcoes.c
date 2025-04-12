@@ -10,6 +10,7 @@ bool funcao_lerRegistros(){
 
     // ler e armazenar registros de dados
 
+        printf("hello world");
 }
 
 bool funcao_imprimirRegistros(){
