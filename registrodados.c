@@ -18,14 +18,14 @@ struct registro_dado{
 
 };
 
-void criar_campoTamVar(FILE *fp, char *campo){
+void criar_campoTamVar(FILE *fp, char **campo){
 
     char tempchar;
     int tamcampo = 0;
 
     fread(&tempchar, sizeof(char), 1, fp);
 
-    while(tempchar != "," && tempchar != '\n'){
+    while(tempchar != ',' && tempchar != '\n'){
 
         tamcampo++;
         fread(&tempchar, sizeof(char), 1, fp);
@@ -34,23 +34,23 @@ void criar_campoTamVar(FILE *fp, char *campo){
 
     if(tamcampo == 0){  // caso o campo seja vazio
 
-        campo = (char *)malloc(sizeof(char));
-        strncpy(campo, "0", 1);
+        *campo = (char *)malloc(sizeof(char));
+        strncpy(*campo, "0", 1);
 
     }
 
-    campo = (char *)malloc((tamcampo + 1)*sizeof(char));
+    *campo = (char **)malloc((tamcampo + 1)*sizeof(char));
 
-    if(campo == NULL){
+    if(*campo == NULL){
 
         printf("Erro ao alocar espaço para o campo");
-        exit(1);
+        exit(1); // fechar o arquivo após erro
 
     }
 
     fseek(fp, -(tamcampo + 1), SEEK_CUR);
-    fread(campo, sizeof(char), tamcampo, fp);
-    campo[tamcampo] = '\0';
+    fread(*campo, sizeof(char), tamcampo, fp);
+    (*campo)[tamcampo] = '\0';
 
     fseek(fp, 1, SEEK_CUR);
 
@@ -96,12 +96,16 @@ void criar_campoTamFixo(FILE *fp, void *campo, int tipo){
 
 dados *criar_dado(){
 
-    dados *regdados;
+    dados *regdados = malloc(sizeof(dados));
 
-    FILE *filein = fopen("nome.csv", "r");
+    if(regdados == NULL){
 
-    regdados->removido = "0";
-    regdados->prox = -1;
+        printf("Falha na alocação");
+        exit(1);
+
+    }
+
+    FILE *filein = fopen("nomein.csv", "rb");
 
     if(filein == NULL){
 
@@ -110,30 +114,80 @@ dados *criar_dado(){
         
     }
 
+    regdados->removido = '0';
+    regdados->prox = -1;
+
     criar_campoTamFixo(filein, &(regdados->idAttack), CAMPO_INT); // ler idAttack
     criar_campoTamFixo(filein, &(regdados->year), CAMPO_INT); // ler year
     criar_campoTamFixo(filein, &(regdados->financialLoss), CAMPO_FLOAT); // ler financialLoss
 
-    criar_campoTamVar(filein, regdados->country); // ler country
-    criar_campoTamVar(filein, regdados->attackType); // ler attackType
-    criar_campoTamVar(filein, regdados->targetIndustry); // ler targetIndustry
-    criar_campoTamVar(filein, regdados->defenseMechanism); // ler defenseMechanism
+    criar_campoTamVar(filein, &(regdados->country)); // ler country
+    criar_campoTamVar(filein, &(regdados->attackType)); // ler attackType
+    criar_campoTamVar(filein, &(regdados->targetIndustry)); // ler targetIndustry
+    criar_campoTamVar(filein, &(regdados->defenseMechanism)); // ler defenseMechanism
 
     regdados->tamanhoRegistro = strlen(regdados->country) + strlen(regdados->attackType) + strlen(regdados->targetIndustry) 
-    + strlen(regdados->defenseMechanism) + sizeof(regdados->idAttack) + sizeof(regdados->year) + sizeof(regdados->financialLoss);
+    + strlen(regdados->defenseMechanism) + sizeof(regdados->prox) + sizeof(regdados->idAttack) + sizeof(regdados->year) + 
+    sizeof(regdados->financialLoss);
 
     fclose(filein);
+
+    return regdados;
+
+}
+
+void escrever_campoTamVar(FILE *fp, char *campo, char keyword){
+
+    char delimcampo = '|';
+
+    fwrite(&keyword, sizeof(char), 1, fp); // escrever keyword
+    fwrite(&campo, sizeof(char), 1, fp); // escrever campo
+    fwrite(&delimcampo, sizeof(char), 1, fp); // escrever delimitador
 
 }
 
 bool escrever_dado(){
 
+    FILE *fileout = fopen("nomeout.csv", "wb");
 
+    if(fileout == NULL){
+
+        printf("Falha ao abrir o arquivo");
+        exit(1);  
+
+    }
+
+    dados *regdados = criar_dado();
+
+    // falta tratar os campos vazios
+
+    fwrite(&(regdados->removido), sizeof(char), 1, fileout); // escrever removido
+    fwrite(&(regdados->tamanhoRegistro), sizeof(int), 1, fileout); // escrever tamanhoRegistro
+    fwrite(&(regdados->prox), sizeof(long long int), 1, fileout); // escrever prox
+    fwrite(&(regdados->idAttack), sizeof(int), 1, fileout); // escrever idAttack
+    fwrite(&(regdados->year), sizeof(int), 1, fileout); // escrever year
+    fwrite(&(regdados->financialLoss), sizeof(float), 1, fileout); // escrever financialLoss
+
+    escrever_campoTamVar(fileout, regdados->country, '1'); // escrever country
+    escrever_campoTamVar(fileout, regdados->attackType, '2'); // escrever attackType
+    escrever_campoTamVar(fileout, regdados->targetIndustry, '3'); // escrever targetIndustry
+    escrever_campoTamVar(fileout, regdados->defenseMechanism, '4'); // escrever defenseMechanism
+
+    fclose(fileout);
 
 }
 
 bool ler_dado(){
 
+    FILE *fileout = fopen("nomeout.csv", "rb");
 
+    if(fileout == NULL){
+
+        printf("Falha ao abrir o arquivo");
+        exit(1);
+
+    }
+
+    
 
 }
