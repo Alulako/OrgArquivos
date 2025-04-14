@@ -34,12 +34,23 @@ void criar_campoTamVar(FILE *fp, char **campo){
 
     if(tamcampo == 0){  // caso o campo seja vazio
 
-        *campo = (char *)malloc(sizeof(char));
-        strncpy(*campo, "0", 1);
+        *campo = (char *)malloc(2*sizeof(char)); // colocar return aqui e checar se alocação funcionou
+        
+        if(*campo == NULL){
 
+            printf("Erro ao alocar o espaço para o campo");
+            exit(1);
+
+        }
+
+            (*campo)[0] = '$';
+            (*campo)[1] = '\0';
+
+            return;
+        
     }
 
-    *campo = (char **)malloc((tamcampo + 1)*sizeof(char));
+    *campo = (char **)malloc((tamcampo + 2)*sizeof(char));
 
     if(*campo == NULL){
 
@@ -128,7 +139,19 @@ dados *criar_dado(){
 
     regdados->tamanhoRegistro = strlen(regdados->country) + strlen(regdados->attackType) + strlen(regdados->targetIndustry) 
     + strlen(regdados->defenseMechanism) + sizeof(regdados->prox) + sizeof(regdados->idAttack) + sizeof(regdados->year) + 
-    sizeof(regdados->financialLoss);
+    sizeof(regdados->financialLoss) + 8;  // +8 é para adiocionar os delimitadores e para as keywords
+
+    if((regdados->country)[0] == '$')
+        regdados->tamanhoRegistro--;
+
+    if((regdados->attackType)[0] == '$')
+        regdados->tamanhoRegistro--;
+
+    if((regdados->targetIndustry)[0] == '$')
+        regdados->tamanhoRegistro--;
+
+    if((regdados->defenseMechanism)[0] == '$')
+        regdados->tamanhoRegistro--;
 
     fclose(filein);
 
@@ -163,7 +186,7 @@ bool escrever_dado(){
 
     fwrite(&(regdados->removido), sizeof(char), 1, fileout); // escrever removido
     fwrite(&(regdados->tamanhoRegistro), sizeof(int), 1, fileout); // escrever tamanhoRegistro
-    fwrite(&(regdados->prox), sizeof(long long int), 1, fileout); // escrever prox
+    fseek(fileout, 8, SEEK_CUR); // pula prox para escrever depois
     fwrite(&(regdados->idAttack), sizeof(int), 1, fileout); // escrever idAttack
     fwrite(&(regdados->year), sizeof(int), 1, fileout); // escrever year
     fwrite(&(regdados->financialLoss), sizeof(float), 1, fileout); // escrever financialLoss
@@ -172,6 +195,12 @@ bool escrever_dado(){
     escrever_campoTamVar(fileout, regdados->attackType, '2'); // escrever attackType
     escrever_campoTamVar(fileout, regdados->targetIndustry, '3'); // escrever targetIndustry
     escrever_campoTamVar(fileout, regdados->defenseMechanism, '4'); // escrever defenseMechanism
+
+    regdados->prox = ftell(fileout);
+    fseek(fileout, -(regdados->tamanhoRegistro - 5), SEEK_CUR); // volta para a posição para escrever prox
+    fwrite(&(regdados->prox), sizeof(long long int), 1, fileout);
+
+    fseek(fileout, regdados->tamanhoRegistro - 13, SEEK_CUR); // volta para o próximo byte offset
 
     fclose(fileout);
 
@@ -188,6 +217,6 @@ bool ler_dado(){
 
     }
 
-    
+    fclose(fileout);
 
 }
