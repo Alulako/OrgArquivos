@@ -38,7 +38,7 @@ void criar_campoTamVar(FILE *fp, char **campo){
         
         if(*campo == NULL){
 
-            printf("Erro ao alocar o espaço para o campo");
+            printf("Falha no processamento do arquivo.");
             exit(1);
 
         }
@@ -54,7 +54,7 @@ void criar_campoTamVar(FILE *fp, char **campo){
 
     if(*campo == NULL){
 
-        printf("Erro ao alocar espaço para o campo");
+        printf("Falha no processamento do arquivo.");
         exit(1); // fechar o arquivo após erro
 
     }
@@ -111,7 +111,7 @@ dados *criar_dado(){
 
     if(regdados == NULL){
 
-        printf("Falha na alocação");
+        printf("Falha no processamento do arquivo.");
         exit(1);
 
     }
@@ -120,7 +120,7 @@ dados *criar_dado(){
 
     if(filein == NULL){
 
-        printf("Falha ao abrir o arquivo");
+        printf("Falha no processamento do arquivo.");
         exit(1);
         
     }
@@ -141,7 +141,7 @@ dados *criar_dado(){
     + strlen(regdados->defenseMechanism) + sizeof(regdados->prox) + sizeof(regdados->idAttack) + sizeof(regdados->year) + 
     sizeof(regdados->financialLoss) + 8;  // +8 é para adiocionar os delimitadores e para as keywords
 
-    if((regdados->country)[0] == '$')
+    if((regdados->country)[0] == '$')   // caso algum campo de tamanho variável seja nulo, não colocará a keyword
         regdados->tamanhoRegistro--;
 
     if((regdados->attackType)[0] == '$')
@@ -175,7 +175,7 @@ bool escrever_dado(){
 
     if(fileout == NULL){
 
-        printf("Falha ao abrir o arquivo");
+        printf("Falha no processamento do arquivo.");
         exit(1);  
 
     }
