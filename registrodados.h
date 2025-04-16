@@ -6,9 +6,9 @@
 
     typedef struct registro_dado dados;
 
-    dados *criar_cabecalho();
-    bool escrever_cabecalho();
-    bool ler_cabecalho();
+    dados *criar_dado(FILE *filein);
+    bool escrever_dado(FILE *filein, FILE *fileout);
+    bool ler_dado();
     // fazer um get para todos os campos do registro (?)
 
 

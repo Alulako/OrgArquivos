@@ -4,8 +4,8 @@
     #include "registrocabecalho.h"
     #include "registrodados.h"
 
-    bool funcao_lerRegistros();
-    bool funcao_imprimirRegistros();
+    void funcao_lerRegistros(char *nomein, char *nomeout);
+    void funcao_imprimirRegistros(char *nomeout);
     bool funcao_pesquisarRegistros();
 
 #endif
