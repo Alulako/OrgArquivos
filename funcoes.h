@@ -6,6 +6,6 @@
 
     void funcao_lerRegistros(char *nomein, char *nomeout);
     void funcao_imprimirRegistros(char *nomeout);
-    bool funcao_pesquisarRegistros();
+    void funcao_pesquisarRegistros(char *nomein);
 
 #endif

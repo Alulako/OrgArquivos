@@ -152,9 +152,7 @@ bool escrever_dado(FILE *filein, FILE *fileout){
 
     fwrite(&(regdados->removido), sizeof(char), 1, fileout); // escrever removido
     fwrite(&(regdados->tamanhoRegistro), sizeof(int), 1, fileout); // escrever tamanhoRegistro
-
-    fseek(fileout, 8, SEEK_CUR); // pula prox para escrever depois
-
+    fwrite(&(regdados->prox), sizeof(long long int), 1, fileout); // escrever prox
     fwrite(&(regdados->idAttack), sizeof(int), 1, fileout); // escrever idAttack
     fwrite(&(regdados->year), sizeof(int), 1, fileout); // escrever year
     fwrite(&(regdados->financialLoss), sizeof(float), 1, fileout); // escrever financialLoss
@@ -170,12 +168,6 @@ bool escrever_dado(FILE *filein, FILE *fileout){
 
     if(regdados->defenseMechanism != NULL)
         escrever_campoTamVar(fileout, regdados->defenseMechanism, '4'); // escrever defenseMechanism
-
-    regdados->prox = ftell(fileout);
-    fseek(fileout, -(regdados->tamanhoRegistro), SEEK_CUR); // volta para a posição para escrever prox
-    fwrite(&(regdados->prox), sizeof(long long int), 1, fileout);
-
-    fseek(fileout, regdados->tamanhoRegistro - 8, SEEK_CUR); // volta para o próximo byte offset
 
     free(regdados->country);
     free(regdados->attackType);

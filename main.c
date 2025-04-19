@@ -7,42 +7,40 @@
 
 int main(){
 
-    FILE *fp;
-
-    fp = fopen("arquivo.bin", "rb+"); // talvez seja melhor abrir e fechar o arquivo em cada função, usar a main apenas para chamar elas
-
-    if(fp == NULL){
-
-        printf("Erro ao abrir o arquivo");
-        return -1;
-
-    }
-
-    int escolha; 
+    int escolha;
+    char nomearq1[30], nomearq2[30];
 
     scanf("%d", &escolha);
 
     switch (escolha){
 
         case 1:
-            funcao_lerRegistros();
+
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo binário de saída gerado
+
+            funcao_lerRegistros(nomearq1, nomearq2);
             break;
 
         case 2:
-            funcao_imprimirRegistros();
+
+            scanf(" %s", nomearq1); // nome do arquivo binário de entrada
+
+            funcao_imprimirRegistros(nomearq1);
             break;
 
         case 3:
-            funcao_pesquisarRegistros();
+
+            scanf(" %s", nomearq1); // nome do arquivo binário de entrada
+
+            funcao_pesquisarRegistros(nomearq1);
             break;
 
         default:
-            printf("Número inválido");
+            printf("Número inválido\n");
             break;
 
     }
-
-    fclose(fp);
 
     return 0;
 
