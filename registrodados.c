@@ -141,12 +141,12 @@ void escrever_campoTamVar(FILE *fp, char *campo, char keyword){
     char delimcampo = '|';
 
     fwrite(&keyword, sizeof(char), 1, fp); // escrever keyword
-    fwrite(campo, sizeof(char), 1, fp); // escrever campo
+    fwrite(campo, sizeof(char), strlen(campo), fp); // escrever campo
     fwrite(&delimcampo, sizeof(char), 1, fp); // escrever delimitador
 
 }
 
-bool escrever_dado(FILE *filein, FILE *fileout){
+void escrever_dado(FILE *filein, FILE *fileout){
 
     dados *regdados = criar_dado(filein);
 
@@ -175,9 +175,5 @@ bool escrever_dado(FILE *filein, FILE *fileout){
     free(regdados->defenseMechanism);
 
     free(regdados);
-
-}
-
-bool ler_dado(){
 
 }

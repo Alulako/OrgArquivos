@@ -65,7 +65,7 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
     fclose(filein);
     fclose(fileout);
 
-    //binarioNaTela();
+    //binarioNaTela(nomeout);
 
 }
 

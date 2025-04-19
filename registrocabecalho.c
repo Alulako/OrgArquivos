@@ -1,109 +1,106 @@
 #include "registrocabecalho.h"
 
-void inicializarCabecalho(Cabecalho *cab) {
-    if (!cab) return;
-    cab->status = '0';             // arquivo inconsistente no início
-    cab->topo = -1;
-    cab->proxByteOffset = 0;
-    cab->nroRegNoRemov = 0;
-    cab->nroRegRemov = 0;
+#define TAM_DESC_IDENTIFICADOR 23
+#define TAM_DESC_YEAR 27
+#define TAM_DESC_FINANCIALLOSS 28
+#define TAM_DESC_COUNTRY 26
+#define TAM_DESC_TYPE 38
+#define TAM_DESC_TARGETIND 38
+#define TAM_DESC_DEFENSE 67
 
-    // Copia as strings/códigos exigidos, sem colocar '\0' a mais
-    // (enunciado: "Não devem ser finalizados com '\0'")
-    // Entretanto, se as strings do enunciado têm exatos 23/27/etc chars,
-    //  iremos usar strncpy.
+struct registro_cabecalho{
 
-    // 23 bytes: "IDENTIFICADOR DO ATAQUE" (21 chars + 2 de espaço extra, mas pode vir sem \0)
-    strncpy(cab->descreveIdentificador, "IDENTIFICADOR DO ATAQUE", TAM_DESC_IDENTIFICADOR);
+    char status;                               
+    long long topo;                            
+    long long proxByteOffset;                  
+    int nroRegArq;                         
+    int nroRegRem;                           
+    char descreveIdentificador[TAM_DESC_IDENTIFICADOR];
+    char descreveYear[TAM_DESC_YEAR];
+    char descreveFinancialLoss[TAM_DESC_FINANCIALLOSS];
+    char codDescreveCountry;
+    char descreveCountry[TAM_DESC_COUNTRY];
+    char codDescreveType;
+    char descreveType[TAM_DESC_TYPE];
+    char codDescreveTargetIndustry;
+    char descreveTargetIndustry[TAM_DESC_TARGETIND];
+    char codDescreveDefense;
+    char descreveDefense[TAM_DESC_DEFENSE];
 
-    // 27 bytes: "ANO EM QUE O ATAQUE OCORREU"
-    strncpy(cab->descreveYear, "ANO EM QUE O ATAQUE OCORREU", TAM_DESC_YEAR);
+};
 
-    // 28 bytes: "PREJUIZO CAUSADO PELO ATAQUE"
-    strncpy(cab->descreveFinancialLoss, "PREJUIZO CAUSADO PELO ATAQUE", TAM_DESC_FINANCIALLOSS);
+void criar_stringTamFixo(FILE *fp, char *campo, int tamanho){
 
-    // codDescreveCountry = '1'; e 26 bytes: "PAIS ONDE OCORREU O ATAQUE"
-    cab->codDescreveCountry = '1';
-    strncpy(cab->descreveCountry, "PAIS ONDE OCORREU O ATAQUE", TAM_DESC_COUNTRY);
+    fread(campo, sizeof(char), tamanho, fp); // armazena o tamanho do campo no campo
 
-    // codDescreveType = '2'; e 38 bytes: "TIPO DE AMEACA A SEGURANCA CIBERNETICA"
-    cab->codDescreveType = '2';
-    strncpy(cab->descreveType, "TIPO DE AMEACA A SEGURANCA CIBERNETICA", TAM_DESC_TYPE);
+    fseek(fp, 1, SEEK_CUR); // pula a ","
 
-    // codDescreveTargetIndustry = '3'; e 38 bytes: "SETOR DA INDUSTRIA QUE SOFREU O ATAQUE"
-    cab->codDescreveTargetIndustry = '3';
-    strncpy(cab->descreveTargetIndustry, "SETOR DA INDUSTRIA QUE SOFREU O ATAQUE", TAM_DESC_TARGETIND);
-
-    // codDescreveDefense = '4'; e 67 bytes:
-    // "ESTRATEGIA DE DEFESA CIBERNETICA EMPREGADA PARA RESOLVER O PROBLEMA"
-    cab->codDescreveDefense = '4';
-    strncpy(cab->descreveDefense,
-            "ESTRATEGIA DE DEFESA CIBERNETICA EMPREGADA PARA RESOLVER O PROBLEMA",
-            TAM_DESC_DEFENSE);
 }
 
-bool escreverCabecalhoBin(FILE *fp, Cabecalho *cab) {
-    if (!fp || !cab) return false;
+cabecalho *criar_cabecalho(FILE *filein){
 
-    // Posiciona ponteiro no início:
-    fseek(fp, 0, SEEK_SET);
+    cabecalho *regcabecalho = malloc(sizeof(cabecalho));
 
-    // Escreve campo a campo, garantindo a ordem e tamanho fixos:
-    fwrite(&cab->status, sizeof(char), 1, fp);
+    if(regcabecalho == NULL){
 
-    fwrite(&cab->topo, sizeof(long long), 1, fp);
-    fwrite(&cab->proxByteOffset, sizeof(long long), 1, fp);
-    fwrite(&cab->nroRegNoRemov, sizeof(int), 1, fp);
-    fwrite(&cab->nroRegRemov, sizeof(int), 1, fp);
+        printf("Falha no processamento do arquivo.");
+        exit(1);
 
-    fwrite(cab->descreveIdentificador, sizeof(char), TAM_DESC_IDENTIFICADOR, fp);
-    fwrite(cab->descreveYear, sizeof(char), TAM_DESC_YEAR, fp);
-    fwrite(cab->descreveFinancialLoss, sizeof(char), TAM_DESC_FINANCIALLOSS, fp);
+    }
 
-    fwrite(&cab->codDescreveCountry, sizeof(char), 1, fp);
-    fwrite(cab->descreveCountry, sizeof(char), TAM_DESC_COUNTRY, fp);
+    regcabecalho->status = '0';
+    regcabecalho->topo = -1;
+    regcabecalho->proxByteOffset = 0;
+    regcabecalho->nroRegArq = 0;
+    regcabecalho->nroRegRem = 0;
 
-    fwrite(&cab->codDescreveType, sizeof(char), 1, fp);
-    fwrite(cab->descreveType, sizeof(char), TAM_DESC_TYPE, fp);
+    criar_stringTamFixo(filein, regcabecalho->descreveIdentificador, TAM_DESC_IDENTIFICADOR); // ler descreveIdentificador
+    criar_stringTamFixo(filein, regcabecalho->descreveYear, TAM_DESC_YEAR); // ler descreveYear
+    criar_stringTamFixo(filein, regcabecalho->descreveFinancialLoss, TAM_DESC_FINANCIALLOSS); // ler descreveFinancialLoss
 
-    fwrite(&cab->codDescreveTargetIndustry, sizeof(char), 1, fp);
-    fwrite(cab->descreveTargetIndustry, sizeof(char), TAM_DESC_TARGETIND, fp);
+    regcabecalho->codDescreveCountry = '1';
+    criar_stringTamFixo(filein, regcabecalho->descreveCountry, TAM_DESC_COUNTRY); // ler descreveCountry
 
-    fwrite(&cab->codDescreveDefense, sizeof(char), 1, fp);
-    fwrite(cab->descreveDefense, sizeof(char), TAM_DESC_DEFENSE, fp);
+    regcabecalho->codDescreveType = '2';
+    criar_stringTamFixo(filein, regcabecalho->descreveType, TAM_DESC_TYPE); // ler descreveType
 
-    return true;
+    regcabecalho->codDescreveTargetIndustry = '3';
+    criar_stringTamFixo(filein, regcabecalho->descreveTargetIndustry, TAM_DESC_TARGETIND); // lerDescreveTargetIndustry
+
+    regcabecalho->codDescreveDefense = '4';
+    criar_stringTamFixo(filein, regcabecalho->descreveDefense, TAM_DESC_DEFENSE); // ler descreveDefense
+
+    return regcabecalho;
+
 }
 
-bool lerCabecalhoBin(FILE *fp, Cabecalho *cab) {
-    if (!fp || !cab) return false;
 
-    // Garante que a leitura começará do byte 0
-    fseek(fp, 0, SEEK_SET);
+void escrever_cabecalho(FILE *filein, FILE *fileout){
 
-    // Lê campo a campo na mesma ordem
-    fread(&cab->status, sizeof(char), 1, fp);
+    cabecalho *regcabecalho = criar_cabecalho(filein);
 
-    fread(&cab->topo, sizeof(long long), 1, fp);
-    fread(&cab->proxByteOffset, sizeof(long long), 1, fp);
-    fread(&cab->nroRegNoRemov, sizeof(int), 1, fp);
-    fread(&cab->nroRegRemov, sizeof(int), 1, fp);
+    fwrite(&(regcabecalho->status), sizeof(char), 1, fileout); // escrever status
+    fwrite(&(regcabecalho->topo), sizeof(long long int), 1, fileout); // escrever topo
+    fwrite(&(regcabecalho->proxByteOffset), sizeof(long long int), 1, fileout); // escrever proxByteOffset
+    fwrite(&(regcabecalho->nroRegArq), sizeof(int), 1, fileout); // escrever nroRegArq
+    fwrite(&(regcabecalho->nroRegRem), sizeof(int), 1, fileout); // escrever nroRegRem
 
-    fread(cab->descreveIdentificador, sizeof(char), TAM_DESC_IDENTIFICADOR, fp);
-    fread(cab->descreveYear, sizeof(char), TAM_DESC_YEAR, fp);
-    fread(cab->descreveFinancialLoss, sizeof(char), TAM_DESC_FINANCIALLOSS, fp);
+    fwrite(&(regcabecalho->descreveIdentificador), sizeof(char), TAM_DESC_IDENTIFICADOR, fileout); // escrever descreveIdentificador
+    fwrite(&(regcabecalho->descreveYear), sizeof(char), TAM_DESC_YEAR, fileout); // escrever descreveYear
+    fwrite(&(regcabecalho->descreveFinancialLoss), sizeof(char), TAM_DESC_FINANCIALLOSS, fileout); // escrever descreveFinancialLoss
 
-    fread(&cab->codDescreveCountry, sizeof(char), 1, fp);
-    fread(cab->descreveCountry, sizeof(char), TAM_DESC_COUNTRY, fp);
+    fwrite(&(regcabecalho->codDescreveCountry), sizeof(char), 1, fileout); // escrever codDescreveCountry
+    fwrite(&(regcabecalho->descreveCountry), sizeof(char), TAM_DESC_COUNTRY, fileout); // escrever descreveCountry
 
-    fread(&cab->codDescreveType, sizeof(char), 1, fp);
-    fread(cab->descreveType, sizeof(char), TAM_DESC_TYPE, fp);
+    fwrite(&(regcabecalho->codDescreveType), sizeof(char), 1, fileout); // escrever codDescreveType
+    fwrite(&(regcabecalho->descreveType), sizeof(char), TAM_DESC_TYPE, fileout); // escrever descreveType
 
-    fread(&cab->codDescreveTargetIndustry, sizeof(char), 1, fp);
-    fread(cab->descreveTargetIndustry, sizeof(char), TAM_DESC_TARGETIND, fp);
+    fwrite(&(regcabecalho->codDescreveTargetIndustry), sizeof(char), 1, fileout); // escrever codDescreveTargetIndustry
+    fwrite(&(regcabecalho->descreveTargetIndustry), sizeof(char), TAM_DESC_TARGETIND, fileout); // escrever descreveTargetIndustry
 
-    fread(&cab->codDescreveDefense, sizeof(char), 1, fp);
-    fread(cab->descreveDefense, sizeof(char), TAM_DESC_DEFENSE, fp);
+    fwrite(&(regcabecalho->codDescreveDefense), sizeof(char), 1, fileout); // escrever codDescreveDefense
+    fwrite(&(regcabecalho->descreveDefense), sizeof(char), TAM_DESC_DEFENSE, fileout); // escrever descreveDefense
 
-    return true;
+    free(regcabecalho);
+
 }

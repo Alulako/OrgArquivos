@@ -3,13 +3,10 @@
 
     #include <stdbool.h>
     #include <stdio.h>
+    #include <string.h>
 
     typedef struct registro_dado dados;
 
-    dados *criar_dado(FILE *filein);
-    bool escrever_dado(FILE *filein, FILE *fileout);
-    bool ler_dado();
-    // fazer um get para todos os campos do registro (?)
-
+    void escrever_dado(FILE *filein, FILE *fileout);
 
 #endif
