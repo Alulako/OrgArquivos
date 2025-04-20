@@ -567,7 +567,7 @@ void funcao_pesquisarRegistros(char *nomein){
 
                     if(strcmp(campos[j], "financialLoss") == 0){
 
-                        fseek(filein, 13, SEEK_CUR); // pula para o primeiro byte de financialLoss
+                        fseek(filein, 21, SEEK_CUR); // pula para o primeiro byte de financialLoss
                         fread(&tempfloat, sizeof(float), 1, filein);
 
                         if(tempfloat == *(float *)valores[j])
