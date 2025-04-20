@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "registrocabecalho.h"
-#include "registrodados.h"
 #include "funcoes.h"
 
 int main(){

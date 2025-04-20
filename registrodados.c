@@ -64,7 +64,7 @@ void criar_campoTamFixo(FILE *fp, void *campo, int tipo){
 
     if(tipo == CAMPO_INT){
 
-        if(tempchar == ","){
+        if(tempchar == ','){
 
             *(int *)campo = -1;
             return;
@@ -78,7 +78,7 @@ void criar_campoTamFixo(FILE *fp, void *campo, int tipo){
 
     if(tipo == CAMPO_FLOAT){
 
-        if(tempchar == ","){
+        if(tempchar == ','){
 
             *(float *)campo = -1.0;
             return;
