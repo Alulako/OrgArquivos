@@ -211,7 +211,7 @@ void imprimir_registro(FILE *fp){
     printf("IDENTIFICADOR DO ATAQUE: ");
     imprimir_campoTamFixo(fp, CAMPO_INT); // lê e printa idAttack 
 
-    printf("ANO EM QUE ATAQUE OCORREU: ");
+    printf("ANO EM QUE O ATAQUE OCORREU: ");
     imprimir_campoTamFixo(fp, CAMPO_INT); // lê e printa year
 
     pos_financialLoss = ftell(fp);
@@ -274,6 +274,7 @@ void imprimir_registro(FILE *fp){
     else{
 
         printf("ESTRATEGIA DE DEFESA CIBERNETICA EMPREGADA PARA RESOLVER O PROBLEMA: ");
+        fseek(fp, pos_defenseMechanism, SEEK_SET);
         imprimir_campoTamVar(fp, '4');
 
     }
