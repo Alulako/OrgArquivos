@@ -199,11 +199,14 @@ void imprimir_campoTamFixo(FILE *fp, int tipo){
 
 void imprimir_registro(FILE *fp){
 
-    int tempint;
+    int tempint, tamanhoRegistro;
     char tempchar;
-    long long int pos_financialLoss, pos_attackType, pos_defenseMechanism;
+    long long int pos_financialLoss, pos_attackType, pos_defenseMechanism, pos_proxReg;
 
-    fseek(fp, 12, SEEK_CUR); // pula para o campo idAttack
+    fread(&tamanhoRegistro, sizeof(int), 1, fp);
+    pos_proxReg = ftell(fp) + tamanhoRegistro;
+
+    fseek(fp, 8, SEEK_CUR); // pula para o campo idAttack
 
     printf("IDENTIFICADOR DO ATAQUE: ");
     imprimir_campoTamFixo(fp, CAMPO_INT); // lê e printa idAttack 
@@ -254,26 +257,19 @@ void imprimir_registro(FILE *fp){
 
     else{
 
-        fseek(fp, -(ftell(fp) - pos_attackType), SEEK_CUR);
+        fseek(fp, pos_attackType, SEEK_SET); // retorna para attackType
         printf("TIPO DE AMEACA A SEGURANCA CIBERNETICA: ");
         imprimir_campoTamVar(fp, '2');
 
     }        
 
-    fseek(fp, -(ftell(fp) - pos_financialLoss), SEEK_CUR); // retorna para financialLoss
+    fseek(fp, pos_financialLoss, SEEK_SET); // retorna para financialLoss
 
     printf("PREJUIZO CAUSADO PELO ATAQUE: ");
     imprimir_campoTamFixo(fp, CAMPO_FLOAT); // lê e printa financialLoss
 
-    if(pos_defenseMechanism == -1){ // caso defenseMechanism não exista
-
+    if(pos_defenseMechanism == -1) // caso defenseMechanism não exista
         printf("ESTRATEGIA DE DEFESA CIBERNETICA EMPREGADA PARA RESOLVER O PROBLEMA: NADA CONSTA\n");
-
-        fseek(fp, -24, SEEK_CUR); // retorna para a posição tamanhoRegistro, voltando 24 bytes
-        fread(&tempint, sizeof(int), 1, fp); // armazena o tamanho do registro
-        fseek(fp, tempint, SEEK_CUR); // avança para o proximo registro
-
-    }
 
     else{
 
@@ -283,6 +279,8 @@ void imprimir_registro(FILE *fp){
     }
 
     printf("\n");
+
+    fseek(fp, pos_proxReg, SEEK_SET); // vai para o proximo registro
 
 }
 
