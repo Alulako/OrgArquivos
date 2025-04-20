@@ -43,8 +43,8 @@ void criar_campoTamVar(FILE *fp, char **campo){
 
     if(*campo == NULL){
 
-        printf("Falha no processamento do arquivo.");
-        exit(1);
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
 
     }
 
@@ -100,8 +100,8 @@ dados *criar_dado(FILE *filein){
 
     if(regdados == NULL){
 
-        printf("Falha no processamento do arquivo.");
-        exit(1);
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
 
     }
 

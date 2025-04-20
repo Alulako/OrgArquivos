@@ -94,7 +94,7 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
     if(filein == NULL || fileout == NULL){
 
         printf("Falha no processamento do arquivo. ");
-        exit(1);
+        exit(0);
 
     }
 
@@ -282,6 +282,8 @@ void imprimir_registro(FILE *fp){
 
     }
 
+    printf("\n");
+
 }
 
 void funcao_imprimirRegistros(char *nomeout){
@@ -290,8 +292,8 @@ void funcao_imprimirRegistros(char *nomeout){
 
     if(fileout == NULL){
 
-        printf("Falha no processamento do arquivo.");
-        exit(1);
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
 
     }
 
@@ -306,7 +308,8 @@ void funcao_imprimirRegistros(char *nomeout){
 
     if(tempint == 0){ // caso não exista nenhum registro não removido
 
-        printf("Registro inexistente.");
+        printf("Registro inexistente.\n\n");
+        printf("**********\n");
         return;
 
     }
@@ -388,8 +391,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
     if(filein == NULL){
 
-        printf("Falha no processamento do arquivo.");
-        exit(1);
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
 
     }
 
@@ -405,7 +408,8 @@ void funcao_pesquisarRegistros(char *nomein){
     
     if(tempint == 0){ // caso nenhum registro não removido exista no arquivo
 
-        printf("Registro inexistente.");
+        printf("Registro inexistente.\n\n");
+        printf("**********\n");
         return;
 
     }
@@ -424,8 +428,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
         if(campos == NULL){
 
-            printf("Falha no processamento do arquivo.");
-            exit(1); 
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
 
         }
 
@@ -433,8 +437,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
         if(valores == NULL){
 
-            printf("Falha no processamento do arquivo.");
-            exit(1); 
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
 
         }
         
@@ -448,8 +452,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
             if(campos[k] == NULL){
 
-                printf("Falha no processamento do arquivo.");
-                exit(1); 
+                printf("Falha no processamento do arquivo. ");
+                exit(0); 
     
             }
 
@@ -461,8 +465,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
                 if(valor == NULL){
 
-                    printf("Falha no processamento do arquivo.");
-                    exit(1); 
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
         
                 }
 
@@ -477,8 +481,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
                 if(valor == NULL){
 
-                    printf("Falha no processamento do arquivo.");
-                    exit(1); 
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
         
                 }
 
@@ -496,8 +500,8 @@ void funcao_pesquisarRegistros(char *nomein){
             
                 if(valores[k] == NULL){
             
-                    printf("Falha no processamento do arquivo.");
-                    exit(1); 
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
             
                 }
             
@@ -507,8 +511,8 @@ void funcao_pesquisarRegistros(char *nomein){
 
             else{
 
-                printf("Falha no processamento do arquivo.");
-                exit(1);
+                printf("Falha no processamento do arquivo. ");
+                exit(0);
 
             }
 
@@ -645,7 +649,7 @@ void funcao_pesquisarRegistros(char *nomein){
         }
 
         if(registroencontrado == false)
-            printf("Registro inexistente.\n");
+            printf("Registro inexistente.\n\n");
 
         printf("**********\n");
 

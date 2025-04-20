@@ -43,8 +43,8 @@ cabecalho *criar_cabecalho(FILE *filein){
 
     if(regcabecalho == NULL){
 
-        printf("Falha no processamento do arquivo.");
-        exit(1);
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
 
     }
 
