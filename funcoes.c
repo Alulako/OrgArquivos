@@ -5,10 +5,7 @@
 #define CAMPO_FLOAT 1
 
 
-void binarioNaTela(char *nomeArquivoBinario) { /* Você não precisa entender o código dessa função. */
-
-	/* Use essa função para comparação no run.codes. Lembre-se de ter fechado (fclose) o arquivo anteriormente.
-	*  Ela vai abrir de novo para leitura e depois fechar (você não vai perder pontos por isso se usar ela). */
+void binarioNaTela(char *nomeArquivoBinario) { 
 
 	unsigned long i, cs;
 	unsigned char *mb;
@@ -112,9 +109,7 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
 
     while(1){
 
-        fread(&tempchar, sizeof(char), 1, filein);
-
-        if(tempchar == '\n') // caso o registro começe com uma linha vazia, quer dizer que chegou no final do csv
+        if(fread(&tempchar, sizeof(char), 1, filein) == 0) // fread retornará zero caso chegue no final do csv
             break;
 
         fseek(filein, -1, SEEK_CUR);
