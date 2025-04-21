@@ -1,5 +1,5 @@
 #include "funcoes.h"
-#include <ctype.h>
+#include <ctype.h> // por conta da função isspace() utilizada em scan_quote_string
 
 #define CAMPO_INT 0
 #define CAMPO_FLOAT 1

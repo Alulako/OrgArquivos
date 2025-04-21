@@ -56,67 +56,44 @@ void criar_campoTamVar(FILE *fp, char **campo){
 
 }
 
-int stringParaInt(const char *str) {
-    int res = 0, neg = 0;
-    if (*str == '-') { neg = 1; str++; }
-    while (*str >= '0' && *str <= '9') {
-        res = res * 10 + (*str - '0');
-        str++;
-    }
-    return neg ? -res : res;
-}
+void criar_campoTamFixo(FILE *fp, void *campo, int tipo){
 
-float stringParaFloat(const char *str) {
-    float res = 0, frac = 0;
-    int div = 1, neg = 0;
-    if (*str == '-') { neg = 1; str++; }
-
-    while (*str >= '0' && *str <= '9') {
-        res = res * 10 + (*str - '0');
-        str++;
-    }
-
-    if (*str == '.') {
-        str++;
-        while (*str >= '0' && *str <= '9') {
-            frac = frac * 10 + (*str - '0');
-            div *= 10;
-            str++;
-        }
-        res += frac / div;
-    }
-
-    return neg ? -res : res;
-}
-
-void criar_campoTamFixo(FILE *fp, void *campo, int tipo) {
-    char buffer[100];
+    char campotamfixo[30], tempchar;
     int i = 0;
-    char c;
 
-    fread(&c, sizeof(char), 1, fp);
+    fread(&tempchar, sizeof(char), 1, fp);
     
-    if (c == ',' || c == '\n') {
-        if (tipo == CAMPO_INT) *(int *)campo = -1;
-        else if (tipo == CAMPO_FLOAT) *(float *)campo = -1.0;
+    if (tempchar == ',' || tempchar == '\n'){ // caso seja, ou \n, o campo é vazio
+
+        if (tipo == CAMPO_INT)
+            *(int *)campo = -1;
+
+        if (tipo == CAMPO_FLOAT)
+            *(float *)campo = -1.0;
+
         return;
+
     }
 
-    // Começar a montar a string com o primeiro caractere lido
-    buffer[i++] = c;
+    campotamfixo[i] = tempchar; // caso não seja, começa montando a string
 
-    while (fread(&c, sizeof(char), 1, fp) == 1 && c != ',' && c != '\n') {
-        buffer[i++] = c;
+    i++;
+
+    while (fread(&tempchar, sizeof(char), 1, fp) == 1 && tempchar != ',' && tempchar != '\n'){ // termina de montar a string
+
+        campotamfixo[i] = tempchar;
+        i++;
+
     }
 
-    buffer[i] = '\0';
+    campotamfixo[i] = '\0'; // adiciona o \0 no final
 
-    if (tipo == CAMPO_INT) {
-        *(int *)campo = stringParaInt(buffer);
+    if (tipo == CAMPO_INT)
+        *(int *)campo = (int)strtol(campotamfixo, NULL, 10); // converte para inteiro
 
-    } else if (tipo == CAMPO_FLOAT) {
-        *(float *)campo = stringParaFloat(buffer);
-    }
+    if (tipo == CAMPO_FLOAT)
+        *(float *)campo = strtof(campotamfixo, NULL); // converte para float
+    
 }
 
 
@@ -143,8 +120,10 @@ dados *criar_dado(FILE *filein){
     criar_campoTamVar(filein, &(regdados->targetIndustry)); // ler targetIndustry
     criar_campoTamVar(filein, &(regdados->defenseMechanism)); // ler defenseMechanism
 
-    regdados->tamanhoRegistro = sizeof(regdados->prox) + sizeof(regdados->idAttack) + sizeof(regdados->year) + 
-    sizeof(regdados->financialLoss);
+    regdados->tamanhoRegistro = sizeof(long long int) // prox
+                                + sizeof(int) // idAttack
+                                + sizeof(int) // year
+                                + sizeof(int); // financialLoss
 
     if(regdados->country != NULL) // +2 por conta do delimitador e da keyword
         regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->country) + 2;
