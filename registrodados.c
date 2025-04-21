@@ -56,43 +56,69 @@ void criar_campoTamVar(FILE *fp, char **campo){
 
 }
 
-void criar_campoTamFixo(FILE *fp, void *campo, int tipo){
-
-    char tempchar;
-
-    fread(&tempchar, sizeof(char), 1, fp);
-
-    if(tipo == CAMPO_INT){
-
-        if(tempchar == ','){
-
-            *(int *)campo = -1;
-            return;
-
-        }
-
-        fseek(fp, -1, SEEK_CUR);
-        fread((int *)campo, sizeof(int), 1, fp);
-
+int stringParaInt(const char *str) {
+    int res = 0, neg = 0;
+    if (*str == '-') { neg = 1; str++; }
+    while (*str >= '0' && *str <= '9') {
+        res = res * 10 + (*str - '0');
+        str++;
     }
-
-    if(tipo == CAMPO_FLOAT){
-
-        if(tempchar == ','){
-
-            *(float *)campo = -1.0;
-            return;
-
-        }
-
-        fseek(fp, -1, SEEK_CUR);
-        fread((float *)campo, sizeof(float), 1, fp);
-
-    }
-
-    fseek(fp, 1, SEEK_CUR);
-
+    return neg ? -res : res;
 }
+
+float stringParaFloat(const char *str) {
+    float res = 0, frac = 0;
+    int div = 1, neg = 0;
+    if (*str == '-') { neg = 1; str++; }
+
+    while (*str >= '0' && *str <= '9') {
+        res = res * 10 + (*str - '0');
+        str++;
+    }
+
+    if (*str == '.') {
+        str++;
+        while (*str >= '0' && *str <= '9') {
+            frac = frac * 10 + (*str - '0');
+            div *= 10;
+            str++;
+        }
+        res += frac / div;
+    }
+
+    return neg ? -res : res;
+}
+
+void criar_campoTamFixo(FILE *fp, void *campo, int tipo) {
+    char buffer[100];
+    int i = 0;
+    char c;
+
+    fread(&c, sizeof(char), 1, fp);
+    
+    if (c == ',' || c == '\n') {
+        if (tipo == CAMPO_INT) *(int *)campo = -1;
+        else if (tipo == CAMPO_FLOAT) *(float *)campo = -1.0;
+        return;
+    }
+
+    // Começar a montar a string com o primeiro caractere lido
+    buffer[i++] = c;
+
+    while (fread(&c, sizeof(char), 1, fp) == 1 && c != ',' && c != '\n') {
+        buffer[i++] = c;
+    }
+
+    buffer[i] = '\0';
+
+    if (tipo == CAMPO_INT) {
+        *(int *)campo = stringParaInt(buffer);
+
+    } else if (tipo == CAMPO_FLOAT) {
+        *(float *)campo = stringParaFloat(buffer);
+    }
+}
+
 
 dados *criar_dado(FILE *filein){
 
