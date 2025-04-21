@@ -78,6 +78,7 @@ void modificar_cabecalho(FILE *fp){
 
     fread(&tempint, sizeof(int), 1, fp); // armazena valor de registros não removidos
     tempint++; // incrementa este valor
+    fseek(fp, -4, SEEK_CUR);
     fwrite(&tempint, sizeof(int), 1, fp); // escreve por cima do valor anterior
 
     fseek(fp, pos_atual, SEEK_SET); // volta para o proximo byte offset
@@ -87,7 +88,7 @@ void modificar_cabecalho(FILE *fp){
 void funcao_lerRegistros(char *nomein, char *nomeout){
 
     FILE *filein = fopen(nomein, "r");
-    FILE *fileout = fopen(nomeout, "wb");
+    FILE *fileout = fopen(nomeout, "wb+");
     char tempchar;
     long long int pos_proxoffset;
 
@@ -103,8 +104,8 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
     pos_proxoffset = ftell(fileout);
 
     fseek(fileout, 0, SEEK_SET); // retorna ao início do cabeçalho
-    tempchar = '1';
-    fwrite(&tempchar, sizeof(char), 1, fileout); // escreve 1 no campo status
+    tempchar = '0';
+    fwrite(&tempchar, sizeof(char), 1, fileout); // escreve 0 no campo status
     fseek(fileout, 8, SEEK_CUR); // pula para o campo proxByteOffset
     fwrite(&pos_proxoffset, sizeof(long long int), 1, fileout);
     fseek(fileout, 259, SEEK_CUR); // pula para o proximo byte offset
@@ -124,8 +125,8 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
     }
 
     fseek(fileout, 0, SEEK_SET);
-    tempchar = '0';
-    fwrite(&tempchar, sizeof(char), 1, fileout); // escreve '0' em status
+    tempchar = '1';
+    fwrite(&tempchar, sizeof(char), 1, fileout); // escreve '1' em status
 
     fclose(filein);
     fclose(fileout);

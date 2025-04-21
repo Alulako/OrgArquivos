@@ -48,7 +48,7 @@ cabecalho *criar_cabecalho(FILE *filein){
 
     }
 
-    regcabecalho->status = '0';
+    regcabecalho->status = '1';
     regcabecalho->topo = -1;
     regcabecalho->proxByteOffset = 0;
     regcabecalho->nroRegArq = 0;
