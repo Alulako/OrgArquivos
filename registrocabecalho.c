@@ -29,7 +29,7 @@ struct registro_cabecalho{
 
 };
 
-void criar_stringTamFixo(FILE *fp, char *campo, int tamanho){
+void criar_stringTamFixo(FILE *fp, char *campo, int tamanho){ // função feita para criar uma string de cada campo de tamanho fixo
 
     fread(campo, sizeof(char), tamanho, fp); // armazena o tamanho do campo no campo
 
@@ -37,7 +37,7 @@ void criar_stringTamFixo(FILE *fp, char *campo, int tamanho){
 
 }
 
-cabecalho *criar_cabecalho(FILE *filein){
+cabecalho *criar_cabecalho(FILE *filein){ // função para criar uma struct do registro de cabeçalho
 
     cabecalho *regcabecalho = malloc(sizeof(cabecalho));
 
@@ -48,27 +48,27 @@ cabecalho *criar_cabecalho(FILE *filein){
 
     }
 
-    regcabecalho->status = '1';
-    regcabecalho->topo = -1;
-    regcabecalho->proxByteOffset = 0;
-    regcabecalho->nroRegArq = 0;
-    regcabecalho->nroRegRem = 0;
+    regcabecalho->status = '1'; // armazena status
+    regcabecalho->topo = -1; // armazena topo
+    regcabecalho->proxByteOffset = 0; // armazena proxByteOffset
+    regcabecalho->nroRegArq = 0; // armazena nroRegArq
+    regcabecalho->nroRegRem = 0; // armazena nroRegRem
 
-    criar_stringTamFixo(filein, regcabecalho->descreveIdentificador, TAM_DESC_IDENTIFICADOR); // ler descreveIdentificador
-    criar_stringTamFixo(filein, regcabecalho->descreveYear, TAM_DESC_YEAR); // ler descreveYear
-    criar_stringTamFixo(filein, regcabecalho->descreveFinancialLoss, TAM_DESC_FINANCIALLOSS); // ler descreveFinancialLoss
+    criar_stringTamFixo(filein, regcabecalho->descreveIdentificador, TAM_DESC_IDENTIFICADOR); // lê descreveIdentificador
+    criar_stringTamFixo(filein, regcabecalho->descreveYear, TAM_DESC_YEAR); // lê descreveYear
+    criar_stringTamFixo(filein, regcabecalho->descreveFinancialLoss, TAM_DESC_FINANCIALLOSS); // lê descreveFinancialLoss
 
-    regcabecalho->codDescreveCountry = '1';
-    criar_stringTamFixo(filein, regcabecalho->descreveCountry, TAM_DESC_COUNTRY); // ler descreveCountry
+    regcabecalho->codDescreveCountry = '1'; // armazena codDescreveCountry
+    criar_stringTamFixo(filein, regcabecalho->descreveCountry, TAM_DESC_COUNTRY); // lê descreveCountry
 
-    regcabecalho->codDescreveType = '2';
-    criar_stringTamFixo(filein, regcabecalho->descreveType, TAM_DESC_TYPE); // ler descreveType
+    regcabecalho->codDescreveType = '2'; // armazena codDescreveType
+    criar_stringTamFixo(filein, regcabecalho->descreveType, TAM_DESC_TYPE); // lê descreveType
 
-    regcabecalho->codDescreveTargetIndustry = '3';
-    criar_stringTamFixo(filein, regcabecalho->descreveTargetIndustry, TAM_DESC_TARGETIND); // lerDescreveTargetIndustry
+    regcabecalho->codDescreveTargetIndustry = '3'; // armazena codDescreveTargetIndustry
+    criar_stringTamFixo(filein, regcabecalho->descreveTargetIndustry, TAM_DESC_TARGETIND); // lê DescreveTargetIndustry
 
-    regcabecalho->codDescreveDefense = '4';
-    criar_stringTamFixo(filein, regcabecalho->descreveDefense, TAM_DESC_DEFENSE); // ler descreveDefense
+    regcabecalho->codDescreveDefense = '4'; // armazena codDescreveDefense
+    criar_stringTamFixo(filein, regcabecalho->descreveDefense, TAM_DESC_DEFENSE); // lê descreveDefense
 
     return regcabecalho;
 
@@ -79,27 +79,27 @@ void escrever_cabecalho(FILE *filein, FILE *fileout){
 
     cabecalho *regcabecalho = criar_cabecalho(filein);
 
-    fwrite(&(regcabecalho->status), sizeof(char), 1, fileout); // escrever status
-    fwrite(&(regcabecalho->topo), sizeof(long long int), 1, fileout); // escrever topo
-    fwrite(&(regcabecalho->proxByteOffset), sizeof(long long int), 1, fileout); // escrever proxByteOffset
-    fwrite(&(regcabecalho->nroRegArq), sizeof(int), 1, fileout); // escrever nroRegArq
-    fwrite(&(regcabecalho->nroRegRem), sizeof(int), 1, fileout); // escrever nroRegRem
+    fwrite(&(regcabecalho->status), sizeof(char), 1, fileout); // escreve status
+    fwrite(&(regcabecalho->topo), sizeof(long long int), 1, fileout); // escreve topo
+    fwrite(&(regcabecalho->proxByteOffset), sizeof(long long int), 1, fileout); // escreve proxByteOffset
+    fwrite(&(regcabecalho->nroRegArq), sizeof(int), 1, fileout); // escreve nroRegArq
+    fwrite(&(regcabecalho->nroRegRem), sizeof(int), 1, fileout); // escreve nroRegRem
 
-    fwrite(&(regcabecalho->descreveIdentificador), sizeof(char), TAM_DESC_IDENTIFICADOR, fileout); // escrever descreveIdentificador
-    fwrite(&(regcabecalho->descreveYear), sizeof(char), TAM_DESC_YEAR, fileout); // escrever descreveYear
-    fwrite(&(regcabecalho->descreveFinancialLoss), sizeof(char), TAM_DESC_FINANCIALLOSS, fileout); // escrever descreveFinancialLoss
+    fwrite(&(regcabecalho->descreveIdentificador), sizeof(char), TAM_DESC_IDENTIFICADOR, fileout); // escreve descreveIdentificador
+    fwrite(&(regcabecalho->descreveYear), sizeof(char), TAM_DESC_YEAR, fileout); // escreve descreveYear
+    fwrite(&(regcabecalho->descreveFinancialLoss), sizeof(char), TAM_DESC_FINANCIALLOSS, fileout); // escreve descreveFinancialLoss
 
-    fwrite(&(regcabecalho->codDescreveCountry), sizeof(char), 1, fileout); // escrever codDescreveCountry
-    fwrite(&(regcabecalho->descreveCountry), sizeof(char), TAM_DESC_COUNTRY, fileout); // escrever descreveCountry
+    fwrite(&(regcabecalho->codDescreveCountry), sizeof(char), 1, fileout); // escreve codDescreveCountry
+    fwrite(&(regcabecalho->descreveCountry), sizeof(char), TAM_DESC_COUNTRY, fileout); // escreve descreveCountry
 
-    fwrite(&(regcabecalho->codDescreveType), sizeof(char), 1, fileout); // escrever codDescreveType
-    fwrite(&(regcabecalho->descreveType), sizeof(char), TAM_DESC_TYPE, fileout); // escrever descreveType
+    fwrite(&(regcabecalho->codDescreveType), sizeof(char), 1, fileout); // escreve codDescreveType
+    fwrite(&(regcabecalho->descreveType), sizeof(char), TAM_DESC_TYPE, fileout); // escreve descreveType
 
-    fwrite(&(regcabecalho->codDescreveTargetIndustry), sizeof(char), 1, fileout); // escrever codDescreveTargetIndustry
-    fwrite(&(regcabecalho->descreveTargetIndustry), sizeof(char), TAM_DESC_TARGETIND, fileout); // escrever descreveTargetIndustry
+    fwrite(&(regcabecalho->codDescreveTargetIndustry), sizeof(char), 1, fileout); // escreve codDescreveTargetIndustry
+    fwrite(&(regcabecalho->descreveTargetIndustry), sizeof(char), TAM_DESC_TARGETIND, fileout); // escreve descreveTargetIndustry
 
-    fwrite(&(regcabecalho->codDescreveDefense), sizeof(char), 1, fileout); // escrever codDescreveDefense
-    fwrite(&(regcabecalho->descreveDefense), sizeof(char), TAM_DESC_DEFENSE, fileout); // escrever descreveDefense
+    fwrite(&(regcabecalho->codDescreveDefense), sizeof(char), 1, fileout); // escreve codDescreveDefense
+    fwrite(&(regcabecalho->descreveDefense), sizeof(char), TAM_DESC_DEFENSE, fileout); // escreve descreveDefense
 
     free(regcabecalho);
 

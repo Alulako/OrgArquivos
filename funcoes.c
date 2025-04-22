@@ -5,7 +5,7 @@
 #define CAMPO_FLOAT 1
 
 
-void binarioNaTela(char *nomeArquivoBinario) { 
+void binarioNaTela(char *nomeArquivoBinario){ 
 
 	unsigned long i, cs;
 	unsigned char *mb;
@@ -30,20 +30,7 @@ void binarioNaTela(char *nomeArquivoBinario) {
 	fclose(fs);
 }
 
-void scan_quote_string(char *str) {
-
-	/*
-	*	Use essa função para ler um campo string delimitado entre aspas (").
-	*	Chame ela na hora que for ler tal campo. Por exemplo:
-	*
-	*	A entrada está da seguinte forma:
-	*		nomeDoCampo "MARIA DA SILVA"
-	*
-	*	Para ler isso para as strings já alocadas str1 e str2 do seu programa, você faz:
-	*		scanf("%s", str1); // Vai salvar nomeDoCampo em str1
-	*		scan_quote_string(str2); // Vai salvar MARIA DA SILVA em str2 (sem as aspas)
-	*
-	*/
+void scan_quote_string(char *str){
 
 	char R;
 
@@ -65,7 +52,7 @@ void scan_quote_string(char *str) {
 	}
 }
 
-void modificar_cabecalho(FILE *fp){
+void modificar_cabecalho(FILE *fp){ // função para modificar campos do cabeçalho
 
     long long int pos_atual = ftell(fp);
     int tempint;
@@ -82,10 +69,11 @@ void modificar_cabecalho(FILE *fp){
 
 }
 
-void funcao_lerRegistros(char *nomein, char *nomeout){
+void funcao_lerRegistros(char *nomein, char *nomeout){ // funcionalidade 1: função para ler os registros de um csv e escrever em um binario
 
     FILE *filein = fopen(nomein, "r");
     FILE *fileout = fopen(nomeout, "wb+");
+
     char tempchar;
     long long int pos_proxoffset;
 
@@ -96,9 +84,9 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
 
     }
 
-    escrever_cabecalho(filein, fileout);
+    escrever_cabecalho(filein, fileout); // escreve o cabeçalho
 
-    pos_proxoffset = ftell(fileout);
+    pos_proxoffset = ftell(fileout); // armazena o proximo byte offset
 
     fseek(fileout, 0, SEEK_SET); // retorna ao início do cabeçalho
     tempchar = '0';
@@ -107,19 +95,19 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
     fwrite(&pos_proxoffset, sizeof(long long int), 1, fileout);
     fseek(fileout, 259, SEEK_CUR); // pula para o proximo byte offset
 
-    while(1){
+    while(1){ // escreve os registros de dados até chegar no final do csv
 
         if(fread(&tempchar, sizeof(char), 1, filein) == 0) // fread retornará zero caso chegue no final do csv
             break;
 
-        fseek(filein, -1, SEEK_CUR);
+        fseek(filein, -1, SEEK_CUR); // retorna o que foi lido
 
-        escrever_dado(filein, fileout);
-        modificar_cabecalho(fileout);
+        escrever_dado(filein, fileout); // escreve o registro de dados
+        modificar_cabecalho(fileout); // modifica campos do cabeçalho
 
     }
 
-    fseek(fileout, 0, SEEK_SET);
+    fseek(fileout, 0, SEEK_SET); // retorna para o começo do binario
     tempchar = '1';
     fwrite(&tempchar, sizeof(char), 1, fileout); // escreve '1' em status
 
@@ -130,7 +118,7 @@ void funcao_lerRegistros(char *nomein, char *nomeout){
 
 }
 
-void imprimir_campoTamVar(FILE *fp, char keyword){
+void imprimir_campoTamVar(FILE *fp, char keyword){ // função feita para imprimir um campo de tamanho variavel
 
     char tempchar;
 
@@ -138,7 +126,7 @@ void imprimir_campoTamVar(FILE *fp, char keyword){
     if(tempchar == keyword){ // checa se campo existe
 
         fread(&tempchar, sizeof(char), 1, fp);
-        while(tempchar != '|'){
+        while(tempchar != '|'){ // imprime na tela até encontrar o delimitador
 
             printf("%c", tempchar);
             fread(&tempchar, sizeof(char), 1, fp);
@@ -158,16 +146,16 @@ void imprimir_campoTamVar(FILE *fp, char keyword){
 
 }
 
-void imprimir_campoTamFixo(FILE *fp, int tipo){
+void imprimir_campoTamFixo(FILE *fp, int tipo){ // função feita para imprimir um campo de tamanho fixo
 
     int tempint;
     float tempfloat;
 
-    if(tipo == CAMPO_INT){
+    if(tipo == CAMPO_INT){ // caso o campo seja um inteiro
 
         fread(&tempint, sizeof(int), 1, fp);
 
-        if(tempint != -1){
+        if(tempint != -1){ // caso o campo não seja vazio
 
             printf("%d\n", tempint);
             return;
@@ -176,11 +164,11 @@ void imprimir_campoTamFixo(FILE *fp, int tipo){
 
     }
 
-    if(tipo == CAMPO_FLOAT){
+    if(tipo == CAMPO_FLOAT){ // caso o campo seja um float
 
         fread(&tempfloat, sizeof(float), 1, fp);
 
-        if(tempfloat != -1){
+        if(tempfloat != -1){ // caso o campo não seja vazio
 
             printf("%.2f\n", tempfloat);
             return;
@@ -193,14 +181,14 @@ void imprimir_campoTamFixo(FILE *fp, int tipo){
 
 }
 
-void imprimir_registro(FILE *fp){
+void imprimir_registro(FILE *fp){ // função feita para imprimir um registro, formatado da maneira que foi pedida
 
     int tempint, tamanhoRegistro;
     char tempchar;
     long long int pos_financialLoss, pos_attackType, pos_defenseMechanism, pos_proxReg;
 
-    fread(&tamanhoRegistro, sizeof(int), 1, fp);
-    pos_proxReg = ftell(fp) + tamanhoRegistro;
+    fread(&tamanhoRegistro, sizeof(int), 1, fp); // armazena o tamanho do registro
+    pos_proxReg = ftell(fp) + tamanhoRegistro; // armazena a posição do proximo registro (posição atual + tamanho do registro)
 
     fseek(fp, 8, SEEK_CUR); // pula para o campo idAttack
 
@@ -219,7 +207,7 @@ void imprimir_registro(FILE *fp){
     fread(&tempchar, sizeof(char), 1, fp);
     if(tempchar == '2'){ // checa se attackType existe
         
-        pos_attackType = ftell(fp) - 1;
+        pos_attackType = ftell(fp) - 1; // caso exista, armazena sua posição
 
         fread(&tempchar, sizeof(char), 1, fp);
         while(tempchar != '|') // loop para chegar no delimitador
@@ -239,7 +227,7 @@ void imprimir_registro(FILE *fp){
 
     fread(&tempchar, sizeof(char), 1, fp);
     if(tempchar == '4') // checa se defenseMechanism existe
-        pos_defenseMechanism = ftell(fp) - 1;
+        pos_defenseMechanism = ftell(fp) - 1; // caso exista, armazena sua posição
 
     else{
 
@@ -270,7 +258,7 @@ void imprimir_registro(FILE *fp){
     else{
 
         printf("ESTRATEGIA DE DEFESA CIBERNETICA EMPREGADA PARA RESOLVER O PROBLEMA: ");
-        fseek(fp, pos_defenseMechanism, SEEK_SET);
+        fseek(fp, pos_defenseMechanism, SEEK_SET); // retorna defenseMechanism
         imprimir_campoTamVar(fp, '4');
 
     }
@@ -281,7 +269,7 @@ void imprimir_registro(FILE *fp){
 
 }
 
-void funcao_imprimirRegistros(char *nomeout){
+void funcao_imprimirRegistros(char *nomeout){ // funcionalidade 2: imprimir todos os registros de dados
 
     FILE *fileout = fopen(nomeout, "rb");
 
@@ -311,7 +299,7 @@ void funcao_imprimirRegistros(char *nomeout){
 
     fseek(fileout, 255, SEEK_CUR); // pula para o primeiro byte do primeiro registro de dado
 
-    while(ftell(fileout) < pos_final){
+    while(ftell(fileout) < pos_final){ // enquanto a posição do ponteiro estiver antes da posição final do arquivo
 
         fread(&tempchar, sizeof(char), 1, fileout);
         if(tempchar == '0')    // apenas irá imprimir o registro se ele não for logicamente removido
@@ -330,7 +318,7 @@ void funcao_imprimirRegistros(char *nomeout){
 
 }
 
-bool filtrar_registroTamVar(FILE *fp, char keyword, char *valor){
+bool filtrar_registroTamVar(FILE *fp, char keyword, char *valor){ // função para filtrar um campo de tamanho variavel de um registro de dados
 
     char tempchar, temp[30];
     bool campoexiste = false;
@@ -339,7 +327,7 @@ bool filtrar_registroTamVar(FILE *fp, char keyword, char *valor){
     int tam;
     fread(&tam, sizeof(int), 1, fp); // armazena o tamanho do registro
 
-    long long int prox = ftell(fp) + tam;
+    long long int prox = ftell(fp) + tam; // armazena posição do proximo registro
 
     fseek(fp, 20, SEEK_CUR); // avança para o espaço de campos de tamanho variavel
 
@@ -347,7 +335,7 @@ bool filtrar_registroTamVar(FILE *fp, char keyword, char *valor){
 
         fread(&tempchar, sizeof(char), 1, fp);
 
-        if(campoexiste == true){
+        if(campoexiste == true){ // caso o campo exista (checagem feita abaixo)
 
             int i = 0;
 
@@ -364,23 +352,23 @@ bool filtrar_registroTamVar(FILE *fp, char keyword, char *valor){
 
         }
 
-        if(tempchar == keyword) // campo encontrado
+        if(tempchar == keyword) // caso encontra a keyword, o campo é encontrado
             campoexiste = true;
 
     }
 
-    if(campoexiste == false)
+    if(campoexiste == false) // caso o campo não exista
         return false;
 
-    if(strcmp(temp, valor) == 0)
+    if(strcmp(temp, valor) == 0) // caso o valor pesquisado seja o mesmo do campo
         return true;
 
-    else
+    else // caso o valor pesquisado seja diferente
         return false;
 
 }
 
-void funcao_pesquisarRegistros(char *nomein){
+void funcao_pesquisarRegistros(char *nomein){ // funcionalidade 3: fazer pesquisas dos registros de dados no binario
 
     FILE *filein = fopen(nomein, "rb");
 
@@ -397,7 +385,7 @@ void funcao_pesquisarRegistros(char *nomein){
     long long int pos_final;
     bool filtra, registroencontrado;
 
-    fseek(filein, 17, SEEK_SET); // pula para a posição do campo que indica o número de registros não removidos
+    fseek(filein, 17, SEEK_SET); // pula para a posição do cabeçalho que indica o número de registros não removidos
 
     fread(&tempint, sizeof(int), 1, filein);
     
@@ -409,15 +397,15 @@ void funcao_pesquisarRegistros(char *nomein){
 
     }
 
-    fseek(filein, 0, SEEK_END);
+    fseek(filein, 0, SEEK_END); // vai para o final do binario
 
-    pos_final = ftell(filein); // armazena o tamanho do arquivo indo para o final e lendo seu último endereço
+    pos_final = ftell(filein); // armazena a posição do seu final
 
-    scanf("%d", &n);
+    scanf("%d", &n); // lê numero de pesquisas que serão feitas
 
     for(int i = 0; i < n; i++){
 
-        scanf("%d", &m);
+        scanf("%d", &m); // lê quantidade de campos que serão pesquisados
 
         char **campos = malloc(m*sizeof(char *));
 
@@ -428,7 +416,7 @@ void funcao_pesquisarRegistros(char *nomein){
 
         }
 
-        void **valores = malloc(m*sizeof(void *));
+        void **valores = malloc(m*sizeof(void *)); // void, pois podem ser 3 tipos de campos diferentes, int, float e string
 
         if(valores == NULL){
 
@@ -452,7 +440,7 @@ void funcao_pesquisarRegistros(char *nomein){
     
             }
 
-            strcpy(campos[k], nomecampo);
+            strcpy(campos[k], nomecampo); // copia o nome do campo para o espaço alocado
 
             if(strcmp(campos[k], "idAttack") == 0 || strcmp(campos[k], "year") == 0){ // caso o nome seja idAttack ou year
 
@@ -466,7 +454,7 @@ void funcao_pesquisarRegistros(char *nomein){
                 }
 
                 scanf("%d", valor);
-                valores[k] = valor;
+                valores[k] = valor; // armazena valor no espaço alocado
                 
             }
 
@@ -482,7 +470,7 @@ void funcao_pesquisarRegistros(char *nomein){
                 }
 
                 scanf("%f", valor);
-                valores[k] = valor;
+                valores[k] = valor; // armazena valor no espaço alocado
                 
             }
 
@@ -490,7 +478,7 @@ void funcao_pesquisarRegistros(char *nomein){
             strcmp(campos[k], "targetIndustry") == 0 || strcmp(campos[k], "defenseMechanism") == 0){ // caso o nome seja country, attackType, targetIndustry ou defenseMechanism
 
                 char valor[30];
-                scan_quote_string(valor);
+                scan_quote_string(valor); 
                 valores[k] = (char *)malloc(strlen(valor) + 1);
             
                 if(valores[k] == NULL){
@@ -500,7 +488,7 @@ void funcao_pesquisarRegistros(char *nomein){
             
                 }
             
-                strcpy(valores[k], valor);
+                strcpy(valores[k], valor); // armazena valor em espaço alocado
                 
             }
 
@@ -515,13 +503,13 @@ void funcao_pesquisarRegistros(char *nomein){
 
         fseek(filein, 276, SEEK_SET); // pula o registro de cabeçalho
 
-        while(ftell(filein) < pos_final){
+        while(ftell(filein) < pos_final){ // enquanto a posição do ponteiro for menor que a ultima posição
 
             fread(&tempchar, sizeof(char), 1, filein);
             if(tempchar == '0'){  // apenas verificará o registro caso ele não esteja logicamente removido
                 
                 fseek(filein, -1, SEEK_CUR);
-                long long int inicio_registro = ftell(filein);
+                long long int inicio_registro = ftell(filein); // armazena posição do inicio do registro
 
                 for(int j = 0; j < m; j++){
 
@@ -532,13 +520,13 @@ void funcao_pesquisarRegistros(char *nomein){
                         fseek(filein, 13, SEEK_CUR); // pula para o primeiro byte de idAttack
                         fread(&tempint, sizeof(int), 1, filein);
 
-                        if(tempint == *(int *)valores[j])
-                            filtra = true;
+                        if(tempint == *(int *)valores[j]) // caso o valor do campo seja igual ao esperado
+                            filtra = true; 
 
-                        else{
+                        else{ 
 
                             filtra = false;
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                         }
 
@@ -549,13 +537,13 @@ void funcao_pesquisarRegistros(char *nomein){
                         fseek(filein, 17, SEEK_CUR); // pula para o primeiro byte de year
                         fread(&tempint, sizeof(int), 1, filein);
 
-                        if(tempint == *(int *)valores[j])
+                        if(tempint == *(int *)valores[j]) // caso o valor do campo seja igual ao esperado
                             filtra = true;
 
                         else{
 
                             filtra = false;
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                         }
 
@@ -566,13 +554,13 @@ void funcao_pesquisarRegistros(char *nomein){
                         fseek(filein, 21, SEEK_CUR); // pula para o primeiro byte de financialLoss
                         fread(&tempfloat, sizeof(float), 1, filein);
 
-                        if(tempfloat == *(float *)valores[j])
+                        if(tempfloat == *(float *)valores[j]) // caso o valor do campo seja igual ao esperado
                             filtra = true;
 
                         else{
 
                             filtra = false;
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                         }
 
@@ -580,45 +568,45 @@ void funcao_pesquisarRegistros(char *nomein){
 
                     if(strcmp(campos[j], "country") == 0){ 
 
-                        filtra = filtrar_registroTamVar(filein, '1', valores[j]);
+                        filtra = filtrar_registroTamVar(filein, '1', valores[j]); // chama função para checar se o valor é o esperado
 
                         if(filtra == false)
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                     }
 
                     if(strcmp(campos[j], "attackType") == 0){
 
-                        filtra = filtrar_registroTamVar(filein, '2', valores[j]);
+                        filtra = filtrar_registroTamVar(filein, '2', valores[j]); // chama função para checar se o valor é o esperado
 
                         if(filtra == false)
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                     }
 
                     if(strcmp(campos[j], "targetIndustry") == 0){
 
-                        filtra = filtrar_registroTamVar(filein, '3', valores[j]);
+                        filtra = filtrar_registroTamVar(filein, '3', valores[j]); // chama função para checar se o valor é o esperado
 
                         if(filtra == false)
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                     }
 
                     if(strcmp(campos[j], "defenseMechanism") == 0){
 
-                        filtra = filtrar_registroTamVar(filein, '4', valores[j]);
+                        filtra = filtrar_registroTamVar(filein, '4', valores[j]); // chama função para checar se o valor é o esperado
 
                         if(filtra == false)
-                            break;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
 
                     }
 
                 }
 
-                fseek(filein, (inicio_registro + 1), SEEK_SET);
+                fseek(filein, (inicio_registro + 1), SEEK_SET); // retorna ao inicio do registro e pula o campo removido
 
-                if(filtra == true){
+                if(filtra == true){ // caso a pesquisa tenha passado em todos os casos
 
                     registroencontrado = true; // como a variavel é true, ao menos um registro foi econtrado
                     imprimir_registro(filein); 
@@ -643,7 +631,7 @@ void funcao_pesquisarRegistros(char *nomein){
             
         }
 
-        if(registroencontrado == false)
+        if(registroencontrado == false) // caso nenhum registro tenha sido encontrado na pesquisa
             printf("Registro inexistente.\n\n");
 
         printf("**********\n");
