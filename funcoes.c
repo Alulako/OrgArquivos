@@ -1,3 +1,6 @@
+// Nome: Arthur Domingues Rios, Número USP: 13731751
+// Nome: Ana Luíza Lasta Kodama, Número USP: 14651204
+
 #include "funcoes.h"
 #include <ctype.h> // por conta da função isspace() utilizada em scan_quote_string
 
