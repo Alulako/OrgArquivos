@@ -32,6 +32,7 @@ int main(){
             break;
 
         default: // caso escreva um número diferente dos 3
+        
             printf("Número inválido\n");
             break;
 
