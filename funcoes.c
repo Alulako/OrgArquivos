@@ -69,7 +69,7 @@ void modificar_cabecalho(FILE *fp){ // função para modificar campos do cabeça
 
 }
 
-void funcao_lerRegistros(char *nomein, char *nomeout){ // funcionalidade 1: função para ler os registros de um csv e escrever em um binario
+void funcao_lerRegistros(char *nomein, char *nomeout){ // FUNCIONALIDADE 1
 
     FILE *filein = fopen(nomein, "r");
     FILE *fileout = fopen(nomeout, "wb+");
@@ -269,7 +269,7 @@ void imprimir_registro(FILE *fp){ // função feita para imprimir um registro, f
 
 }
 
-void funcao_imprimirRegistros(char *nomeout){ // funcionalidade 2: imprimir todos os registros de dados
+void funcao_imprimirRegistros(char *nomeout){ // FUNCIONALIDADE 2
 
     FILE *fileout = fopen(nomeout, "rb");
 
@@ -368,7 +368,7 @@ bool filtrar_registroTamVar(FILE *fp, char keyword, char *valor){ // função pa
 
 }
 
-void funcao_pesquisarRegistros(char *nomein){ // funcionalidade 3: fazer pesquisas dos registros de dados no binario
+void funcao_pesquisarRegistros(char *nomein){ // FUNCIONALIDADE 3
 
     FILE *filein = fopen(nomein, "rb");
 
