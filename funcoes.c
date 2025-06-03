@@ -655,3 +655,21 @@ void funcao_pesquisarRegistros(char *nomein){ // FUNCIONALIDADE 3
 
 }
 
+    void funcao_removerRegistros(char *nomein){
+
+
+
+    }
+
+    void funcao_inserirRegistros(char *nomein){
+
+
+
+    }
+    
+    void funcao_atualizarRegistros(char *nomein){
+
+
+
+    }
+
