@@ -386,7 +386,9 @@ void funcao_pesquisarRegistros(char *nomein){ // FUNCIONALIDADE 3
     char tempchar;
     float tempfloat;
     long long int pos_final;
-    bool filtra, registroencontrado;
+    bool filtra, registroencontrado, idpesquisado;
+
+    idpesquisado = false; // inicializa considerando que o idAttack não será pesquisado
 
     fseek(filein, 17, SEEK_SET); // pula para a posição do cabeçalho que indica o número de registros não removidos
 
@@ -523,8 +525,12 @@ void funcao_pesquisarRegistros(char *nomein){ // FUNCIONALIDADE 3
                         fseek(filein, 13, SEEK_CUR); // pula para o primeiro byte de idAttack
                         fread(&tempint, sizeof(int), 1, filein);
 
-                        if(tempint == *(int *)valores[j]) // caso o valor do campo seja igual ao esperado
-                            filtra = true; 
+                        if(tempint == *(int *)valores[j]){ // caso o valor do campo seja igual ao esperado
+
+                            filtra = true;
+                            idpesquisado = true;
+
+                        }
 
                         else{ 
 
@@ -612,8 +618,15 @@ void funcao_pesquisarRegistros(char *nomein){ // FUNCIONALIDADE 3
                 if(filtra == true){ // caso a pesquisa tenha passado em todos os casos
 
                     registroencontrado = true; // como a variavel é true, ao menos um registro foi econtrado
-                    imprimir_registro(filein); 
+                    imprimir_registro(filein);
 
+                    if(idpesquisado == true){ // caso o idAttack tenha sido utilizado na pesquisa, ele não continua lendo o arquivo
+
+                        idpesquisado = false;
+                        break;
+                    
+                    }
+                    
                 }
 
                 else{

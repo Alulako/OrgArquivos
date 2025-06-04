@@ -34,7 +34,28 @@ int main(){
             funcao_pesquisarRegistros(nomearq1);
             break;
 
-        default: // caso escreva um número diferente dos 3
+        case 4: // funcionalidade 4
+
+            scanf(" %s", nomearq1); // nome do arquivo binário de entrada
+
+            funcao_removerRegistros(nomearq1);
+            break;
+
+        case 5: // funcionalidade 5
+
+            scanf(" %s", nomearq1); // nome do arquivo binário de entrada
+
+            funcao_inserirRegistros(nomearq1);
+            break;
+
+        case 6: // funcionalidade 6
+
+            scanf(" %s", nomearq1); // nome do arquivo binário de entrada
+
+            funcao_atualizarRegistros(nomearq1);
+            break;
+
+        default: // caso escreva um número diferente
 
             printf("Número inválido\n");
             break;
