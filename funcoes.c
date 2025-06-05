@@ -984,7 +984,413 @@ void funcao_inserirRegistros(char *nomein){ // FUNCIONALIDADE 5
     
 void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
 
+    FILE *filein = fopen(nomein, "rb+");
 
+    if(filein == NULL){
+
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
+
+    }
+
+    int tempint, n, m, p, tamanho_registro;
+    long long int pos_final, prox;
+    float tempfloat;
+    char tempchar;
+    bool filtra, idpesquisado;
+
+    idpesquisado = false; // inicializa considerando que o idAttack não será pesquisado
+
+    fseek(filein, 17, SEEK_SET); // pula para a posição do cabeçalho que indica o número de registros não removidos
+
+    fread(&tempint, sizeof(int), 1, filein);
+    
+    if(tempint == 0) // caso nenhum registro não removido exista no arquivo
+        return;
+    
+    fseek(filein, 0, SEEK_END); // vai para o final do binario
+
+    pos_final = ftell(filein); // armazena a posição do seu final
+
+    scanf("%d", &n); // lê numero de atualizações que serão feitas
+
+    for(int i = 0; i < n; i++){
+
+        scanf("%d", &m); // lê quantidade de campos que serão pesquisados para atualização
+
+        char **campos = malloc(m*sizeof(char *));
+
+        if(campos == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+
+        void **valores = malloc(m*sizeof(void *)); // void, pois podem ser 3 tipos de campos diferentes, int, float e string
+
+        if(valores == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+        
+        for(int k = 0; k < m; k++){
+
+            char nomecampo[17]; // maior nome possível é defenseMechanism, que possui 16 letras
+            scanf(" %s", nomecampo); // lê o nome do campo
+            campos[k] = (char *)malloc(strlen(nomecampo) + 1); // aloca espaço + 1 (por conta do \0)
+
+            if(campos[k] == NULL){
+
+                printf("Falha no processamento do arquivo. ");
+                exit(0); 
+    
+            }
+
+            strcpy(campos[k], nomecampo); // copia o nome do campo para o espaço alocado
+
+            if(strcmp(campos[k], "idAttack") == 0 || strcmp(campos[k], "year") == 0){ // caso o nome seja idAttack ou year
+
+                int *valor = malloc(sizeof(int));
+
+                if(valor == NULL){
+
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
+        
+                }
+
+                scanf("%d", valor);
+                valores[k] = valor; // armazena valor no espaço alocado
+                
+            }
+
+            else if(strcmp(campos[k], "financialLoss") == 0){ // caso o nome seja financialLoss
+
+                float *valor = malloc(sizeof(float));
+
+                if(valor == NULL){
+
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
+        
+                }
+
+                scanf("%f", valor);
+                valores[k] = valor; // armazena valor no espaço alocado
+                
+            }
+
+            else if(strcmp(campos[k], "country") == 0 || strcmp(campos[k], "attackType") == 0 || 
+            strcmp(campos[k], "targetIndustry") == 0 || strcmp(campos[k], "defenseMechanism") == 0){ // caso o nome seja country, attackType, targetIndustry ou defenseMechanism
+
+                char valor[30];
+                scan_quote_string(valor); 
+                valores[k] = (char *)malloc(strlen(valor) + 1);
+            
+                if(valores[k] == NULL){
+            
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
+            
+                }
+            
+                strcpy(valores[k], valor); // armazena valor em espaço alocado
+                
+            }
+
+            else{
+
+                printf("Falha no processamento do arquivo. ");
+                exit(0);
+
+            }
+
+        }
+
+        scanf("%d", &p); // lê quantidade de campos que serão atualizados
+
+        char **camposatt = malloc(m*sizeof(char *));
+
+        if(camposatt == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+
+        void **valoresatt = malloc(m*sizeof(void *)); // void, pois podem ser 3 tipos de campos diferentes, int, float e string
+
+        if(valoresatt == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+        
+        for(int k = 0; k < p; k++){
+
+            char nomecampo[17]; // maior nome possível é defenseMechanism, que possui 16 letras
+            scanf(" %s", nomecampo); // lê o nome do campo
+            camposatt[k] = (char *)malloc(strlen(nomecampo) + 1); // aloca espaço + 1 (por conta do \0)
+
+            if(camposatt[k] == NULL){
+
+                printf("Falha no processamento do arquivo. ");
+                exit(0); 
+    
+            }
+
+            strcpy(camposatt[k], nomecampo); // copia o nome do campo para o espaço alocado
+
+            if(strcmp(camposatt[k], "idAttack") == 0 || strcmp(camposatt[k], "year") == 0){ // caso o nome seja idAttack ou year
+
+                int *valor = malloc(sizeof(int));
+
+                if(valor == NULL){
+
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
+        
+                }
+
+                scanf("%d", valor);
+                valoresatt[k] = valor; // armazena valor no espaço alocado
+                
+            }
+
+            else if(strcmp(camposatt[k], "financialLoss") == 0){ // caso o nome seja financialLoss
+
+                float *valor = malloc(sizeof(float));
+
+                if(valor == NULL){
+
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
+        
+                }
+
+                scanf("%f", valor);
+                valoresatt[k] = valor; // armazena valor no espaço alocado
+                
+            }
+
+            else if(strcmp(camposatt[k], "country") == 0 || strcmp(camposatt[k], "attackType") == 0 || 
+            strcmp(camposatt[k], "targetIndustry") == 0 || strcmp(camposatt[k], "defenseMechanism") == 0){ // caso o nome seja country, attackType, targetIndustry ou defenseMechanism
+
+                char valor[30];
+                scan_quote_string(valor); 
+                valoresatt[k] = (char *)malloc(strlen(valor) + 1);
+            
+                if(valoresatt[k] == NULL){
+            
+                    printf("Falha no processamento do arquivo. ");
+                    exit(0); 
+            
+                }
+            
+                strcpy(valoresatt[k], valor); // armazena valor em espaço alocado
+                
+            }
+
+            else{
+
+                printf("Falha no processamento do arquivo. ");
+                exit(0);
+
+            }
+
+        }
+
+        fseek(filein, 276, SEEK_SET); // pula o registro de cabeçalho
+
+        while(ftell(filein) < pos_final){ // enquanto a posição do ponteiro for menor que a ultima posição
+
+            fread(&tempchar, sizeof(char), 1, filein);
+            if(tempchar == '0'){  // apenas verificará o registro caso ele não esteja logicamente removido
+                
+                fseek(filein, -1, SEEK_CUR);
+                long long int inicio_registro = ftell(filein); // armazena posição do inicio do registro
+
+                for(int j = 0; j < m; j++){
+
+                    fseek(filein, inicio_registro, SEEK_SET); // retorna para o início do registro
+
+                    if(strcmp(campos[j], "idAttack") == 0){
+
+                        fseek(filein, 13, SEEK_CUR); // pula para o primeiro byte de idAttack
+                        fread(&tempint, sizeof(int), 1, filein);
+
+                        if(tempint == *(int *)valores[j]){ // caso o valor do campo seja igual ao esperado
+
+                            filtra = true;
+                            idpesquisado = true;
+
+                        }
+
+                        else{ 
+
+                            filtra = false;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                        }
+
+                    }
+
+                    if(strcmp(campos[j], "year") == 0){
+
+                        fseek(filein, 17, SEEK_CUR); // pula para o primeiro byte de year
+                        fread(&tempint, sizeof(int), 1, filein);
+
+                        if(tempint == *(int *)valores[j]) // caso o valor do campo seja igual ao esperado
+                            filtra = true;
+
+                        else{
+
+                            filtra = false;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                        }
+
+                    }
+
+                    if(strcmp(campos[j], "financialLoss") == 0){
+
+                        fseek(filein, 21, SEEK_CUR); // pula para o primeiro byte de financialLoss
+                        fread(&tempfloat, sizeof(float), 1, filein);
+
+                        if(tempfloat == *(float *)valores[j]) // caso o valor do campo seja igual ao esperado
+                            filtra = true;
+
+                        else{
+
+                            filtra = false;
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                        }
+
+                    }
+
+                    if(strcmp(campos[j], "country") == 0){ 
+
+                        filtra = filtrar_registroTamVar(filein, '1', valores[j]); // chama função para checar se o valor é o esperado
+
+                        if(filtra == false)
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                    }
+
+                    if(strcmp(campos[j], "attackType") == 0){
+
+                        filtra = filtrar_registroTamVar(filein, '2', valores[j]); // chama função para checar se o valor é o esperado
+
+                        if(filtra == false)
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                    }
+
+                    if(strcmp(campos[j], "targetIndustry") == 0){
+
+                        filtra = filtrar_registroTamVar(filein, '3', valores[j]); // chama função para checar se o valor é o esperado
+
+                        if(filtra == false)
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                    }
+
+                    if(strcmp(campos[j], "defenseMechanism") == 0){
+
+                        filtra = filtrar_registroTamVar(filein, '4', valores[j]); // chama função para checar se o valor é o esperado
+
+                        if(filtra == false)
+                            break; // caso não seja o valor esperado, já pula para o proximo registro
+
+                    }
+
+                }
+
+                if(filtra == true){ // caso a pesquisa tenha passado em todos os casos
+
+
+
+
+
+
+
+
+
+                    
+
+
+                    // logica de atualização aqui
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    if(idpesquisado == true){ // caso o idAttack tenha sido utilizado na pesquisa, ele não continua lendo o arquivo
+
+                        idpesquisado = false;
+                        break;
+                    
+                    }
+
+                    fseek(filein, (tamanho_registro - 8), SEEK_CUR); // pula para o proximo registro
+                    
+                }
+
+                else{
+                    
+                    
+                    fseek(filein, (inicio_registro + 1), SEEK_SET); // vai para o campo tamanhoRegistro
+                    fread(&tempint, sizeof(int), 1, filein); // armazena o tamanho do registro
+                    fseek(filein, tempint, SEEK_CUR); // avança para o proximo registro
+
+                }
+
+            }
+    
+            else{ // else para caso o registro tenha sido removido logicamente
+    
+                fread(&tempint, sizeof(int), 1, filein); // armazena o tamanho do registro
+                fseek(filein, tempint, SEEK_CUR); // avança para o proximo registro
+    
+            }
+            
+        }
+
+        for(int i = 0; i < m; i++){
+
+            free(valores[i]);
+            free(campos[i]);
+
+        }
+
+        free(valores);
+        free(campos);
+
+    }
+
+    fclose(filein);
+
+    binarioNaTela(nomein);
 
 }
+
+
+
+
+
+
+
 
