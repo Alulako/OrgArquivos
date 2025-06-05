@@ -55,6 +55,31 @@ void scan_quote_string(char *str){
 	}
 }
 
+void modificar_status(FILE *fp, bool abrindo){ // função para modificar o campo status do cabeçalho quando abrir o arquivo para escrita
+
+    long long int pos_atual = ftell(fp);
+    char status;
+
+    fseek(fp, 0, SEEK_SET); // vai para o campo status do registro de cabeçalho
+
+    if(abrindo == true){ // o arquivo está abrindo
+
+        status = '0';
+        fwrite(&status, sizeof(char), 1, fp);
+
+    }
+
+    else{ // o arquivo está fechando
+
+        status = '1';
+        fwrite(&status, sizeof(char), 1, fp);
+
+    }
+
+    fseek(fp, pos_atual, SEEK_SET); // retorna para a posição que estava
+
+}
+
 void modificar_cabecalho(FILE *fp){ // função para modificar campos do cabeçalho
 
     long long int pos_atual = ftell(fp);
@@ -91,10 +116,9 @@ void funcao_lerRegistros(char *nomein, char *nomeout){ // FUNCIONALIDADE 1
 
     pos_proxoffset = ftell(fileout); // armazena o proximo byte offset
 
-    fseek(fileout, 0, SEEK_SET); // retorna ao início do cabeçalho
-    tempchar = '0';
-    fwrite(&tempchar, sizeof(char), 1, fileout); // escreve 0 no campo status
-    fseek(fileout, 8, SEEK_CUR); // pula para o campo proxByteOffset
+    modificar_status(fileout, true);
+
+    fseek(fileout, 9, SEEK_SET); // pula para o campo proxByteOffset
     fwrite(&pos_proxoffset, sizeof(long long int), 1, fileout);
     fseek(fileout, 259, SEEK_CUR); // pula para o proximo byte offset
 
@@ -110,9 +134,7 @@ void funcao_lerRegistros(char *nomein, char *nomeout){ // FUNCIONALIDADE 1
 
     }
 
-    fseek(fileout, 0, SEEK_SET); // retorna para o começo do binario
-    tempchar = '1';
-    fwrite(&tempchar, sizeof(char), 1, fileout); // escreve '1' em status
+    modificar_status(fileout, false);
 
     fclose(filein);
     fclose(fileout);
@@ -687,6 +709,8 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
     idpesquisado = false; // inicializa considerando que o idAttack não será pesquisado
 
+    modificar_status(filein, true);
+
     fseek(filein, 17, SEEK_SET); // pula para a posição do cabeçalho que indica o número de registros não removidos
 
     fread(&tempint, sizeof(int), 1, filein);
@@ -970,6 +994,8 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
     }
 
+    modificar_status(filein, false);
+
     fclose(filein);
 
     binarioNaTela(nomein);
@@ -1000,6 +1026,8 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
     bool filtra, idpesquisado;
 
     idpesquisado = false; // inicializa considerando que o idAttack não será pesquisado
+
+    modificar_status(filein, true);
 
     fseek(filein, 17, SEEK_SET); // pula para a posição do cabeçalho que indica o número de registros não removidos
 
@@ -1321,7 +1349,7 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
 
 
 
-                    
+
 
 
                     // logica de atualização aqui
@@ -1380,6 +1408,8 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
         free(campos);
 
     }
+
+    modificar_status(filein, false);
 
     fclose(filein);
 
