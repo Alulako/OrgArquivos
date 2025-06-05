@@ -12,5 +12,8 @@
     typedef struct registro_dado dados;
 
     void escrever_dado(FILE *filein, FILE *fileout);
+    dados *ler_regdados(FILE *pos_registro);
+    void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo);
+    int atualizar_tamanho(dados *regdados);
 
 #endif

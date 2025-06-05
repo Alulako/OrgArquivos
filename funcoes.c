@@ -1341,30 +1341,27 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
 
                 if(filtra == true){ // caso a pesquisa tenha passado em todos os casos
 
+                    dados *regdados = ler_regdados(filein);
+                    
+                    for(int j = 0; j < p; j++)
+                        atualizar_regdados(regdados, campos[j], valores[j]);
 
+                    int novotamanho = atualizar_tamanho(regdados);
 
+                    fseek(filein, inicio_registro, SEEK_SET);
 
+                    if(novotamanho <= tamanho_registro){
 
+                        // insere registro no mesmo lugar
 
+                    }
 
+                    else{
 
+                        // chama funcionalidade de remover registro
+                        // chama funcionalidade de inserir registro
 
-
-
-
-                    // logica de atualização aqui
-
-
-
-
-
-
-
-
-
-
-
-
+                    }
 
                     if(idpesquisado == true){ // caso o idAttack tenha sido utilizado na pesquisa, ele não continua lendo o arquivo
 

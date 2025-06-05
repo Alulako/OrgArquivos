@@ -185,3 +185,252 @@ void escrever_dado(FILE *filein, FILE *fileout){ // função para escrever um re
     free(regdados);
 
 }
+
+dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dados no arquivo binario
+
+    dados *regdados = malloc(sizeof(dados)); // cria uma struct para armazenar um registro de dados
+
+    if(regdados == NULL){
+
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
+
+    }
+
+    char tempchar, tempstring[30];
+    int i = 0;
+
+    fread(&(regdados->removido), sizeof(char), 1, pos_registro); // armazena campo removido
+    fread(&(regdados->tamanhoRegistro), sizeof(int), 1, pos_registro); // armazena o campo tamanhoRegistro
+    fread(&(regdados->prox), sizeof(long long int), 1, pos_registro); // armazena o campo prox
+    fread(&(regdados->idAttack), sizeof(int), 1, pos_registro); // armazena o campo idAttack
+    fread(&(regdados->year), sizeof(int), 1, pos_registro); // armazena o campo year
+    fread(&(regdados->financialLoss), sizeof(float), 1, pos_registro); // armazena o campo financialLoss
+
+    fread(&tempchar, sizeof(char), 1, pos_registro);
+
+    if(tempchar != '1'){ 
+
+        (regdados->country) = NULL; // caso não tenha o codigo, o campo é vazio
+        fseek(pos_registro, -1, SEEK_CUR);
+
+    }
+
+    else{
+
+        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
+
+            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
+            
+            i++;
+
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+
+        }
+
+        tempstring[i] = tempchar;
+        tempstring[i + 1] = '\0';
+
+        (regdados->country) = malloc((i+2)*sizeof(char));
+
+        if((regdados->country) == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+
+        strcpy((regdados->country), tempstring); // copia a string temporaria para o campo country
+
+        i = 0;
+
+    }
+
+    if(tempchar != '2'){ 
+
+        (regdados->attackType) = NULL; // caso não tenha o codigo, o campo é vazio
+        fseek(pos_registro, -1, SEEK_CUR); 
+
+    }
+
+    else{
+
+        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
+
+            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
+            
+            i++;
+
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+
+        }
+
+        tempstring[i] = tempchar;
+        tempstring[i + 1] = '\0';
+
+        (regdados->attackType) = malloc((i+2)*sizeof(char));
+
+        if((regdados->attackType) == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+
+        strcpy((regdados->attackType), tempstring); // copia a string temporaria para o campo attackType
+
+        i = 0;
+
+    }
+
+    if(tempchar != '3'){ 
+
+        (regdados->targetIndustry) = NULL; // caso não tenha o codigo, o campo é vazio
+        fseek(pos_registro, -1, SEEK_CUR);
+
+    }
+
+    else{
+
+        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
+
+            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
+            
+            i++;
+
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+
+        }
+
+        tempstring[i] = tempchar;
+        tempstring[i + 1] = '\0';
+
+        (regdados->targetIndustry) = malloc((i+2)*sizeof(char));
+
+        if((regdados->targetIndustry) == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+
+        strcpy((regdados->targetIndustry), tempstring); // copia a string temporaria para o campo targetIndustry
+
+        i = 0;
+
+    }
+
+    if(tempchar != '4'){ 
+
+        (regdados->defenseMechanism) = NULL; // caso não tenha o codigo, o campo é vazio
+        fseek(pos_registro, -1, SEEK_CUR);
+
+    }
+
+    else{
+
+        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
+
+            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
+            
+            i++;
+
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+
+        }
+
+        tempstring[i] = tempchar;
+        tempstring[i + 1] = '\0';
+
+        (regdados->defenseMechanism) = malloc((i+2)*sizeof(char));
+
+        if((regdados->defenseMechanism) == NULL){
+
+            printf("Falha no processamento do arquivo. ");
+            exit(0); 
+
+        }
+
+        strcpy((regdados->defenseMechanism), tempstring); // copia a string temporaria para o campo defenseMechanism
+
+        i = 0;
+
+    }
+
+}
+
+void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo){ // função para atualizar os dados em um registro
+
+    if(strcmp(nomecampo, "idAttack") == 0){
+
+        regdados->idAttack = *((int *)valorcampo);
+
+    }
+
+    else if(strcmp(nomecampo, "year") == 0){
+
+        regdados->year = *((int *)valorcampo);
+
+    }
+
+    else if(strcmp(nomecampo, "financialLoss") == 0){
+
+        regdados->financialLoss = *((float *)valorcampo);
+
+    }
+
+    else if(strcmp(nomecampo, "country") == 0){
+
+        strcpy((regdados->country), (char *)valorcampo);
+
+    }
+
+    else if(strcmp(nomecampo, "attackType") == 0){
+
+        strcpy((regdados->attackType), (char *)valorcampo);
+
+    }
+
+    else if(strcmp(nomecampo, "targetIndustry") == 0){
+
+        strcpy((regdados->targetIndustry), (char *)valorcampo);
+
+    }
+
+    else if(strcmp(nomecampo, "defenseMechanism") == 0){
+
+        strcpy((regdados->defenseMechanism), (char *)valorcampo);
+
+    }
+
+    else{
+
+        printf("Falha no processamento do arquivo. ");
+        exit(0);  
+
+    }
+
+}
+
+int atualizar_tamanho(dados *regdados){
+
+    regdados->tamanhoRegistro = sizeof(long long int) // prox
+                                + sizeof(int) // idAttack
+                                + sizeof(int) // year
+                                + sizeof(int); // financialLoss
+
+    if(regdados->country != NULL) 
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->country);
+
+    if(regdados->attackType != NULL)
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->attackType);
+
+    if(regdados->targetIndustry != NULL)
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->targetIndustry);
+
+    if(regdados->defenseMechanism != NULL)
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->defenseMechanism);
+
+    return (regdados->tamanhoRegistro);
+
+}
