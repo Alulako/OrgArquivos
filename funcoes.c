@@ -690,6 +690,40 @@ void funcao_pesquisarRegistros(char *nomein){ // FUNCIONALIDADE 3
 
 }
 
+void remover_registro(FILE *fp, long long int inicio_registro){ // função que remove logicamente o registro
+
+    int tempint, tamanho_registro;
+    char tempchar;
+    long long int pos_atual, prox;
+
+    pos_atual = ftell(fp); // armazena a posição atual
+
+    fseek(fp, 1, SEEK_SET); // vai para o campo topo do registro de cabeçalho
+    fread(&prox, sizeof(long long int), 1, fp); // armazena o topo em prox
+    fseek(fp, 1, SEEK_SET); // retorna ao início de topo
+    fwrite(&inicio_registro, sizeof(long long int), 1, fp); // escreve o byte offset do registro removido
+
+    fseek(fp, 8, SEEK_CUR); // vai para o campo nroRegArq
+    fread(&tempint, sizeof(int), 1, fp);
+    tempint--;
+    fseek(fp, -4, SEEK_CUR); // retorna para o início de nroRegArq
+    fwrite(&tempint, sizeof(int), 1, fp); // decrementa 1 no número de registros não removidos
+    fread(&tempint, sizeof(int), 1, fp); // armazena o valor de nroRegRem
+    tempint++;
+    fseek(fp, -4, SEEK_CUR); // retorna para o inicio de nroRegRem
+    fwrite(&tempint, sizeof(int), 1, fp); // incrementa 1 no número de registros removidos
+
+
+    fseek(fp, inicio_registro, SEEK_SET); // retorna para o inicio do registro
+    tempchar = '1';
+    fwrite(&tempchar, sizeof(char), 1, fp); // marca o registro como logicamente removido
+    fread(&tamanho_registro, sizeof(int), 1, fp); // armazena o tamanho do registro
+    fwrite(&prox, sizeof(long long int), 1, fp); // escreve o que estava em topo
+
+    fseek(fp, (tamanho_registro - 8), SEEK_CUR); // pula para o proximo registro
+
+}
+
 void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
     FILE *filein = fopen(nomein, "rb+");
@@ -929,27 +963,7 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
                 if(filtra == true){ // caso a pesquisa tenha passado em todos os casos
 
-                    fseek(filein, 1, SEEK_SET); // vai para o campo topo do registro de cabeçalho
-                    fread(&prox, sizeof(long long int), 1, filein); // armazena o topo em prox
-                    fseek(filein, 1, SEEK_SET); // retorna ao início de topo
-                    fwrite(&inicio_registro, sizeof(long long int), 1, filein); // escreve o byte offset do registro removido
-
-                    fseek(filein, 8, SEEK_CUR); // vai para o campo nroRegArq
-                    fread(&tempint, sizeof(int), 1, filein);
-                    tempint--;
-                    fseek(filein, -4, SEEK_CUR); // retorna para o início de nroRegArq
-                    fwrite(&tempint, sizeof(int), 1, filein); // decrementa 1 no número de registros não removidos
-                    fread(&tempint, sizeof(int), 1, filein); // armazena o valor de nroRegRem
-                    tempint++;
-                    fseek(filein, -4, SEEK_CUR); // retorna para o inicio de nroRegRem
-                    fwrite(&tempint, sizeof(int), 1, filein); // incrementa 1 no número de registros removidos
-
-
-                    fseek(filein, inicio_registro, SEEK_SET); // retorna para o inicio do registro
-                    tempchar = '1';
-                    fwrite(&tempchar, sizeof(char), 1, filein); // marca o registro como logicamente removido
-                    fread(&tamanho_registro, sizeof(int), 1, filein); // armazena o tamanho do registro
-                    fwrite(&prox, sizeof(long long int), 1, filein); // escreve o que estava em topo
+                        remover_registro(filein, inicio_registro);
 
                     if(idpesquisado == true){ // caso o idAttack tenha sido utilizado na pesquisa, ele não continua lendo o arquivo
 
@@ -957,8 +971,6 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
                         break;
                     
                     }
-
-                    fseek(filein, (tamanho_registro - 8), SEEK_CUR); // pula para o proximo registro
                     
                 }
 
@@ -1358,7 +1370,7 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
 
                     else{
 
-                        // chama funcionalidade de remover registro
+                        // chama funcionalidade de remover registro (modularizar parte da funcionalidade 4 que remove registro)
                         // chama funcionalidade de inserir registro
 
                     }
