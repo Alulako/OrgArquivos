@@ -1012,61 +1012,55 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
     binarioNaTela(nomein);
 
-}    
-    void funcao_inserirRegistros(char *nomein) { // FUNCIONALIDADE 5
-    // 1) abre arquivo em modo binário leitura+escrita
+}
+
+void funcao_inserirRegistros(char *nomein) { // FUNCIONALIDADE 5
+    // 1) abre o arquivo em modo leitura+escrita binário
     FILE *fp = fopen(nomein, "rb+");
     if (!fp) {
         printf("Falha no processamento do arquivo.");
         exit(0);
     }
-    // marca status = '0' (inconsistente)
-    modificar_status(fp, true);  // :contentReference[oaicite:0]{index=0}
 
-    // 2) lê quantas inserções virão
+    // marca status = '0' (inconsistente)
+    modificar_status(fp, true);
+
+    // 2) lê número de inserções
     int n;
     scanf("%d", &n);
 
     for (int i = 0; i < n; i++) {
-        // --- leitura direta dos campos de entrada ---
+        // --- 2.1) leitura dos campos da nova inserção ---
         int idAttack, year;
         float financialLoss;
         char country[100], attackType[100], targetIndustry[100], defenseMechanism[100];
 
-        scanf("%d", &idAttack);
-        scanf("%d", &year);
-        scanf("%f", &financialLoss);
-        scan_quote_string(country);           // :contentReference[oaicite:1]{index=1}
+        scanf("%d %d %f", &idAttack, &year, &financialLoss);
+        scan_quote_string(country);
         scan_quote_string(attackType);
         scan_quote_string(targetIndustry);
         scan_quote_string(defenseMechanism);
 
-        // --- calcula o tamanho do payload (tamanhoRegistro) ---
-        int tamanhoRegistro = sizeof(long long)  // prox
-                             + sizeof(int)        // idAttack
-                             + sizeof(int)        // year
-                             + sizeof(float);     // financialLoss
+        // --- 2.2) calcula tamanho do registro (payload) ---
+        // payload = prox (8) + idAttack (4) + year (4) + financialLoss (4)
+        int tamanhoRegistro = sizeof(long long)
+                            + sizeof(int)
+                            + sizeof(int)
+                            + sizeof(float);
+        if (country[0] != '\0')        tamanhoRegistro += 1 + strlen(country) + 1;
+        if (attackType[0] != '\0')     tamanhoRegistro += 1 + strlen(attackType) + 1;
+        if (targetIndustry[0] != '\0') tamanhoRegistro += 1 + strlen(targetIndustry) + 1;
+        if (defenseMechanism[0] != '\0') tamanhoRegistro += 1 + strlen(defenseMechanism) + 1;
 
-        if (country[0] != '\0') {
-            tamanhoRegistro += 1 + strlen(country) + 1;  // keyword + valor + '|'
-        }
-        if (attackType[0] != '\0') {
-            tamanhoRegistro += 1 + strlen(attackType) + 1;
-        }
-        if (targetIndustry[0] != '\0') {
-            tamanhoRegistro += 1 + strlen(targetIndustry) + 1;
-        }
-        if (defenseMechanism[0] != '\0') {
-            tamanhoRegistro += 1 + strlen(defenseMechanism) + 1;
-        }
-
-        // --- busca na lista de removidos (First-Fit) ---
-        fseek(fp, 1, SEEK_SET);
+        // --- 2.3) procura na lista de removidos (First Fit) ---
+        fseek(fp, 1, SEEK_SET);               // topo em byte offset 1
         long long freePos;
         fread(&freePos, sizeof(long long), 1, fp);
 
-        long long prev = -1, curr = freePos, foundPos = -1, foundNext = -1;
+        long long prev = -1, curr = freePos;
+        long long foundPos = -1, foundNext = -1;
         int foundSize = 0;
+
         while (curr != -1) {
             fseek(fp, curr, SEEK_SET);
             char flag; int sz; long long nxt;
@@ -1083,43 +1077,53 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
             curr = nxt;
         }
 
-        long long writePos;
         bool reuse = (foundPos != -1);
+        long long writePos;
 
         if (reuse) {
+            // --- 3a) reutiliza bloco removido ---
             writePos = foundPos;
-            // retira da lista
+            // retira da lista:
             if (prev == -1) {
+                // topo passa a ser foundNext
                 fseek(fp, 1, SEEK_SET);
                 fwrite(&foundNext, sizeof(long long), 1, fp);
             } else {
+                // ajusta o prox do anterior
                 fseek(fp, prev + 1, SEEK_SET);
                 fwrite(&foundNext, sizeof(long long), 1, fp);
             }
-            // decrementa nroRegRem (offset 21)
+            // decrementa nroRegRem (offset 21) :contentReference[oaicite:0]{index=0}
             fseek(fp, 21, SEEK_SET);
-            int rem;
+            int rem; 
             fread(&rem, sizeof(int), 1, fp);
             rem--;
             fseek(fp, -4, SEEK_CUR);
             fwrite(&rem, sizeof(int), 1, fp);
         } else {
-            // append no fim
+            // --- 3b) append no fim do arquivo ---
             fseek(fp, 0, SEEK_END);
             writePos = ftell(fp);
         }
 
-        // --- grava o registro em writePos ---
+        // --- 4) grava o registro em writePos ---
         fseek(fp, writePos, SEEK_SET);
+
+        // removed flag
         char removed = '0';
         fwrite(&removed, 1, 1, fp);
+        // tamanhoRegistro
         fwrite(&tamanhoRegistro, sizeof(int), 1, fp);
+        // prox = -1
         long long prox = -1;
         fwrite(&prox, sizeof(long long), 1, fp);
+
+        // campos fixos
         fwrite(&idAttack, sizeof(int), 1, fp);
         fwrite(&year, sizeof(int), 1, fp);
         fwrite(&financialLoss, sizeof(float), 1, fp);
 
+        // campos variáveis
         if (country[0] != '\0') {
             char kw = '1', sep = '|';
             fwrite(&kw, 1, 1, fp);
@@ -1145,7 +1149,7 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
             fwrite(&sep, 1, 1, fp);
         }
 
-        // preenche com '$' se reutilizou bloco maior que o necessário
+        // se reutilizou bloco maior, preenche o restante com '$' :contentReference[oaicite:1]{index=1}
         if (reuse) {
             int leftover = foundSize - tamanhoRegistro;
             for (int j = 0; j < leftover; j++) {
@@ -1154,15 +1158,18 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
             }
         }
 
-        // atualiza cabeçalho: proxByteOffset e nroRegArq
-        modificar_cabecalho(fp);  // :contentReference[oaicite:2]{index=2}
+        // --- 5) atualiza cabeçalho: proxByteOffset e nroRegArq ---
+        // proxByteOffset = posição atual do ponteiro (após escrever o registro)
+        // nroRegArq  incrementa em 1 (contagem de registros não-removidos) :contentReference[oaicite:2]{index=2}
+        modificar_cabecalho(fp);
     }
 
-    // 3) marca status = '1' (consistente), fecha e imprime checksum
-    modificar_status(fp, false);  // :contentReference[oaicite:3]{index=3}  
+    // 6) fecha corretamente: status = '1' (consistente), fecha e imprime checksum
+    modificar_status(fp, false);
     fclose(fp);
-    binarioNaTela(nomein);          // :contentReference[oaicite:4]{index=4}
+    binarioNaTela(nomein);
 }
+
 
 void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
 
