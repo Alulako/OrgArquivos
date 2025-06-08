@@ -1014,32 +1014,27 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
 }
 
-void funcao_inserirRegistros(char *nomein) { // FUNCIONALIDADE 5
-    // 1) abre em modo binário leitura+escrita
+/* --------------------------------------------------------------------
+ *  Funcionalidade 5 – Inserir Registros
+ * ------------------------------------------------------------------*/
+void funcao_inserirRegistros(char *nomein)
+{
     FILE *fp = fopen(nomein, "rb+");
-    if (!fp) {
-        printf("Falha no processamento do arquivo.");
-        exit(0);
-    }
+    if (!fp) { printf("Falha no processamento do arquivo."); exit(0); }
 
-    // marca status = '0' (inconsistente)
-    modificar_status(fp, true);  // :contentReference[oaicite:0]{index=0}
+    /* status = '0' (arquivo inconsistente) */
+    modificar_status(fp, true);
 
-    // 2) lê quantas inserções virão
     int n;
     scanf("%d", &n);
 
-    // 3) carrega o proxByteOffset do cabeçalho
-    long long writePos;
-    fseek(fp, 9, SEEK_SET);
-    fread(&writePos, sizeof(long long), 1, fp);  // :contentReference[oaicite:1]{index=1}
-
     for (int i = 0; i < n; i++) {
-        // --- leitura dos campos ---
-        int idAttack, year;
+
+        /* ---------- 1. Lê os campos da inserção ---------- */
+        int   idAttack, year;
         float financialLoss;
-        char country[100], attackType[100],
-             targetIndustry[100], defenseMechanism[100];
+        char  country[100], attackType[100],
+              targetIndustry[100], defenseMechanism[100];
 
         scanf("%d %d %f", &idAttack, &year, &financialLoss);
         scan_quote_string(country);
@@ -1047,95 +1042,128 @@ void funcao_inserirRegistros(char *nomein) { // FUNCIONALIDADE 5
         scan_quote_string(targetIndustry);
         scan_quote_string(defenseMechanism);
 
-        // --- calcula tamanhoRegistro (payload) ---
-        int tamanhoRegistro  = sizeof(long long)  // prox
-                             + sizeof(int)         // idAttack
-                             + sizeof(int)         // year
-                             + sizeof(float);      // financialLoss
-        if (country[0]        != '\0') tamanhoRegistro += 1 + strlen(country) + 1;
-        if (attackType[0]     != '\0') tamanhoRegistro += 1 + strlen(attackType) + 1;
-        if (targetIndustry[0] != '\0') tamanhoRegistro += 1 + strlen(targetIndustry) + 1;
-        if (defenseMechanism[0] != '\0') tamanhoRegistro += 1 + strlen(defenseMechanism) + 1;
+        /* ---------- 2. Calcula tamanhoRegistro (payload) ---------- */
+        int tamanhoRegistro = 8          /* prox */
+                            + 4 + 4 + 4; /* idAttack, year, financialLoss  */
+        if (country[0])        tamanhoRegistro += 1 + strlen(country)        + 1;
+        if (attackType[0])     tamanhoRegistro += 1 + strlen(attackType)     + 1;
+        if (targetIndustry[0]) tamanhoRegistro += 1 + strlen(targetIndustry) + 1;
+        if (defenseMechanism[0]) tamanhoRegistro += 1 + strlen(defenseMechanism) + 1;
 
-        // --- First-Fit na lista de removidos ---
+        /* ---------- 3. Procura bloco na lista de removidos ---------- */
         fseek(fp, 1, SEEK_SET);
-        long long freePos;
-        fread(&freePos, sizeof(long long), 1, fp);
+        long long topo;
+        fread(&topo, sizeof(long long), 1, fp);
 
-        long long prev = -1, curr = freePos,
-                  foundPos = -1, foundNext = -1;
-        int foundSize = 0;
-        while (curr != -1) {
-            fseek(fp, curr, SEEK_SET);
+        long long prev = -1, cur = topo;
+        long long foundPos = -1, foundNext = -1;
+        int       foundSize = 0;
+
+        while (cur != -1) {
+            fseek(fp, cur, SEEK_SET);
             char flag; int sz; long long nxt;
             fread(&flag, 1, 1, fp);
-            fread(&sz, sizeof(int), 1, fp);
-            fread(&nxt, sizeof(long long), 1, fp);
+            fread(&sz,   sizeof(int), 1, fp);
+            fread(&nxt,  sizeof(long long), 1, fp);
             if (sz >= tamanhoRegistro) {
-                foundPos  = curr;
+                foundPos  = cur;
                 foundNext = nxt;
                 foundSize = sz;
                 break;
             }
-            prev = curr;
-            curr = nxt;
+            prev = cur;  cur = nxt;
         }
 
-        bool reuse = (foundPos != -1);
-        // 4) determina posição de escrita
+        bool reuse   = (foundPos != -1);
+        long long writePos;
+
+        /* ---------- 4. Define posição de escrita ---------- */
         if (reuse) {
-            writePos = foundPos;
-            // retira da lista
-            if (prev == -1) {
+            writePos = foundPos;                 /* reaproveita bloco */
+
+            /* retira bloco da lista encadeada de removidos */
+            if (prev == -1) {                    /* era o topo */
                 fseek(fp, 1, SEEK_SET);
                 fwrite(&foundNext, sizeof(long long), 1, fp);
-            } else {
+            } else {                             /* liga anterior → próximo */
                 fseek(fp, prev + 1, SEEK_SET);
                 fwrite(&foundNext, sizeof(long long), 1, fp);
             }
-            // decrementa nroRegRem
+            /* decrementa nroRegRem (offset 21) */
             fseek(fp, 21, SEEK_SET);
-            int rem; fread(&rem, sizeof(int), 1, fp);
-            rem--;
+            int nroRem;
+            fread(&nroRem, sizeof(int), 1, fp);
+            nroRem--;
             fseek(fp, -4, SEEK_CUR);
-            fwrite(&rem, sizeof(int), 1, fp);
-        }
-        // se não houver bloco livre, usa o proxByteOffset
-        // (gravaremos em writePos que já veio do cabeçalho)
+            fwrite(&nroRem, sizeof(int), 1, fp);
 
-        // --- grava o registro em writePos ---
+        } else {                                 /* append no fim */
+            fseek(fp, 0, SEEK_END);
+            writePos = ftell(fp);
+        }
+
+        /* ---------- 5. Escreve o registro ---------- */
         fseek(fp, writePos, SEEK_SET);
-        char removed = '0'; fwrite(&removed, 1, 1, fp);
+        char removed = '0';
+        fwrite(&removed, 1, 1, fp);
         fwrite(&tamanhoRegistro, sizeof(int), 1, fp);
-        long long prox = -1; fwrite(&prox, sizeof(long long), 1, fp);
-        fwrite(&idAttack, sizeof(int), 1, fp);
-        fwrite(&year,      sizeof(int), 1, fp);
+        long long prox = -1;
+        fwrite(&prox, sizeof(long long), 1, fp);     /* ponteiro encadeamento */
+
+        fwrite(&idAttack,      sizeof(int),   1, fp);
+        fwrite(&year,          sizeof(int),   1, fp);
         fwrite(&financialLoss, sizeof(float), 1, fp);
 
-        if (country[0]        != '\0') { char kw='1', sep='|'; fwrite(&kw,1,1,fp); fwrite(country,1,strlen(country),fp); fwrite(&sep,1,1,fp); }
-        if (attackType[0]     != '\0') { char kw='2', sep='|'; fwrite(&kw,1,1,fp); fwrite(attackType,1,strlen(attackType),fp); fwrite(&sep,1,1,fp); }
-        if (targetIndustry[0] != '\0') { char kw='3', sep='|'; fwrite(&kw,1,1,fp); fwrite(targetIndustry,1,strlen(targetIndustry),fp); fwrite(&sep,1,1,fp); }
-        if (defenseMechanism[0] != '\0') { char kw='4', sep='|'; fwrite(&kw,1,1,fp); fwrite(defenseMechanism,1,strlen(defenseMechanism),fp); fwrite(&sep,1,1,fp); }
+        if (country[0]) {
+            char kw='1', sep='|';
+            fwrite(&kw, 1, 1, fp); fwrite(country, 1, strlen(country), fp); fwrite(&sep,1,1,fp);
+        }
+        if (attackType[0]) {
+            char kw='2', sep='|';
+            fwrite(&kw, 1, 1, fp); fwrite(attackType, 1, strlen(attackType), fp); fwrite(&sep,1,1,fp);
+        }
+        if (targetIndustry[0]) {
+            char kw='3', sep='|';
+            fwrite(&kw, 1, 1, fp); fwrite(targetIndustry, 1, strlen(targetIndustry), fp); fwrite(&sep,1,1,fp);
+        }
+        if (defenseMechanism[0]) {
+            char kw='4', sep='|';
+            fwrite(&kw, 1, 1, fp); fwrite(defenseMechanism, 1, strlen(defenseMechanism), fp); fwrite(&sep,1,1,fp);
+        }
 
-        // preenche lixo se reaproveitou bloco maior
+        /* preenche com '$' se bloco reutilizado for maior */
         if (reuse) {
-            int leftover = foundSize - tamanhoRegistro;
-            for (int j = 0; j < leftover; j++) {
-                char l = '$'; fwrite(&l, 1, 1, fp);
+            int sobra = foundSize - tamanhoRegistro;
+            for (int k = 0; k < sobra; k++) {
+                char lixo = '$';
+                fwrite(&lixo, 1, 1, fp);
             }
         }
 
-        // --- 5) captura nova posição e atualiza cabeçalho ---
-        long long pos_atual = ftell(fp);
-        modificar_cabecalho(fp);        // :contentReference[oaicite:2]{index=2}
-        writePos = pos_atual;           // próxima inserção, se houver
+        /* ---------- 6. Atualiza cabeçalho ---------- */
+        long long fimAtual = ftell(fp);   /* posição imediatamente após o registro */
+
+        /* 6.1 incrementa nroRegArq (offset 17) */
+        fseek(fp, 17, SEEK_SET);
+        int nroArq;
+        fread(&nroArq, sizeof(int), 1, fp);
+        nroArq++;
+        fseek(fp, -4, SEEK_CUR);
+        fwrite(&nroArq, sizeof(int), 1, fp);
+
+        /* 6.2 se foi append, atualiza proxByteOffset (offset 9) */
+        if (!reuse) {
+            fseek(fp, 9, SEEK_SET);
+            fwrite(&fimAtual, sizeof(long long), 1, fp);
+        }
     }
 
-    // 6) fecha corretamente e imprime checksum
+    /* status = '1' (consistente) */
     modificar_status(fp, false);
     fclose(fp);
     binarioNaTela(nomein);
 }
+
 
 
 void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
