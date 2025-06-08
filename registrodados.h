@@ -9,7 +9,18 @@
     #include <stdlib.h>
     #include <string.h>
 
-    typedef struct registro_dado dados;
+    typedef struct registro_dado {
+    int idAttack;
+    int year;
+    float financialLoss;
+    char *country;
+    char *attackType;
+    char *targetIndustry;
+    char *defenseMechanism;
+    char removido;
+    int tamanhoRegistro;
+    long long prox;
+} dados;
 
     void escrever_dado(FILE *filein, FILE *fileout);
     dados *ler_regdados(FILE *pos_registro);

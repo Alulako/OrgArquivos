@@ -1015,9 +1015,137 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 }
 
 void funcao_inserirRegistros(char *nomein){ // FUNCIONALIDADE 5
+    
+FILE *fp = fopen(nomein,"rb+");
+    if(!fp){
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
+    }
+    modificar_status(fp,true);
 
+    // lê o número de inserções
+    int n; scanf("%d",&n);
 
+    for(int i=0;i<n;i++){
+        // -------------------------------------------------------------
+        // 1) cria o registro de dados a partir do CSV (stdin)
+        // -------------------------------------------------------------
+        dados *d = criar_dado(stdin);
+        int newSize = d->tamanhoRegistro;
 
+        // -------------------------------------------------------------
+        // 2) busca na lista de remocao (cabeçalho.topo) um espaço First Fit
+        // -------------------------------------------------------------
+        // cabeçalho.topo está em byte offset 1
+        fseek(fp,1,SEEK_SET);
+        long long freePos; fread(&freePos,sizeof(long long),1,fp);
+
+        long long prevPos = -1, curPos = freePos;
+        long long foundPos = -1, foundNext = -1;
+        int  foundSize = 0;
+
+        while(curPos != -1){
+            // lê registro removido na posição curPos
+            fseek(fp,curPos,SEEK_SET);
+            char flag; int sizeR; long long next;
+            fread(&flag,1,1,fp);
+            fread(&sizeR,sizeof(int),1,fp);
+            fread(&next,sizeof(long long),1,fp);
+
+            if(sizeR >= newSize){
+                foundPos = curPos;
+                foundNext= next;
+                foundSize= sizeR;
+                break;
+            }
+            prevPos = curPos;
+            curPos  = next;
+        }
+
+        long long writePos;
+        bool reuse = (foundPos!=-1);
+
+        if(reuse){
+            // ---------------------------------------------------------
+            // 3a) reutiliza bloco removido
+            // ---------------------------------------------------------
+            writePos = foundPos;
+            // retira da lista encadeada:
+            if(prevPos==-1){
+                // cabeçalho.topo = foundNext
+                fseek(fp,1,SEEK_SET);
+                fwrite(&foundNext,sizeof(long long),1,fp);
+            } else {
+                // altera "prox" do anterior
+                fseek(fp,prevPos+1,SEEK_SET);
+                fwrite(&foundNext,sizeof(long long),1,fp);
+            }
+            // decrementa nroRegRem (offset 21)
+            fseek(fp,21,SEEK_SET);
+            int rem; fread(&rem,sizeof(int),1,fp);
+            rem--;
+            fseek(fp,-4,SEEK_CUR);
+            fwrite(&rem,sizeof(int),1,fp);
+        } else {
+            // ---------------------------------------------------------
+            // 3b) append no fim do arquivo
+            // ---------------------------------------------------------
+            fseek(fp,0,SEEK_END);
+            writePos = ftell(fp);
+        }
+
+        // -------------------------------------------------------------
+        // 4) grava o registro em writePos
+        // -------------------------------------------------------------
+        fseek(fp,writePos,SEEK_SET);
+        char removed = '0';
+        fwrite(&removed,1,1,fp);
+        fwrite(&newSize,sizeof(int),1,fp);
+
+        // prox = -1 (não faz encadeamento aqui)
+        long long prox = -1;
+        fwrite(&prox,sizeof(long long),1,fp);
+
+        // campos fixos + variáveis via escrever_* already in registrodados
+        fwrite(&d->idAttack,sizeof(int),1,fp);
+        fwrite(&d->year,sizeof(int),1,fp);
+        fwrite(&d->financialLoss,sizeof(float),1,fp);
+
+        if(d->country)
+            escrever_campoTamVar(fp,d->country,'1');
+        if(d->attackType)
+            escrever_campoTamVar(fp,d->attackType,'2');
+        if(d->targetIndustry)
+            escrever_campoTamVar(fp,d->targetIndustry,'3');
+        if(d->defenseMechanism)
+            escrever_campoTamVar(fp,d->defenseMechanism,'4');
+
+        // se reuse e couber lixo, preenche com '$'
+        if(reuse){
+            int written = 1 + 8 + 4 + 4 + 4; // removido+prox+id+year+loss
+            // calcula tam real do payload escrito (passível de resumir)
+            // mas newSize já inclui cada string +2 delim, então:
+            int leftover = foundSize - newSize;
+            for(int b=0;b<leftover;b++){
+                char lixo = '$';
+                fwrite(&lixo,1,1,fp);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // 5) atualiza cabeçalho (proxByteOffset + nroRegArq)
+        // -------------------------------------------------------------
+        modificar_cabecalho(fp);
+
+        free(d);
+    }
+
+    // -------------------------------------------------------------
+    // 6) finaliza e checksum
+    // -------------------------------------------------------------
+    modificar_status(fp,false);
+    fclose(fp);
+    binarioNaTela(nomein);
 }
     
 void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
