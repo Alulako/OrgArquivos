@@ -26,5 +26,7 @@
     dados *ler_regdados(FILE *pos_registro);
     void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo);
     int atualizar_tamanho(dados *regdados);
+    dados *criar_dado(FILE *filein);
+    void escrever_campoTamVar(FILE *fp, char *campo, char keyword);
 
 #endif
