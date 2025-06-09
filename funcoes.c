@@ -1014,10 +1014,7 @@ void funcao_removerRegistros(char *nomein){ // FUNCIONALIDADE 4
 
 }
 
-/* ===============================================================
- * FUNCIONALIDADE 5 – inserção (versão final sem padding/alinhamento)
- * =============================================================== */
-static void inc_nroRegArq(FILE *fp)              /* ++nroRegArq */
+void inc_nroRegArq(FILE *fp)              /* ++nroRegArq */
 {
     long long pos = ftell(fp);
     fseek(fp, 17, SEEK_SET);
@@ -1028,7 +1025,7 @@ static void inc_nroRegArq(FILE *fp)              /* ++nroRegArq */
     fseek(fp, pos, SEEK_SET);
 }
 
-static void dec_nroRegRem(FILE *fp)              /* --nroRegRem */
+void dec_nroRegRem(FILE *fp)              /* --nroRegRem */
 {
     long long pos = ftell(fp);
     fseek(fp, 21, SEEK_SET);
@@ -1039,30 +1036,39 @@ static void dec_nroRegRem(FILE *fp)              /* --nroRegRem */
     fseek(fp, pos, SEEK_SET);
 }
 
-void funcao_inserirRegistros(char *nomein)
-{
+void funcao_inserirRegistros(char *nomein){
+
     FILE *fp = fopen(nomein, "rb+");
-    if (!fp) { printf("Falha no processamento do arquivo."); exit(0); }
+
+    if (fp == NULL){ 
+
+        printf("Falha no processamento do arquivo."); 
+        exit(0); 
+    
+    }
 
     modificar_status(fp, true);
 
-    int n;  scanf("%d", &n);
+    int n;  
+    
+    scanf("%d", &n); // leitura de quantas inserções serão feitas
 
     for (int k = 0; k < n; k++) {
 
-        /* ---------- leitura da entrada ---------- */
-        int idAttack, year;   float financialLoss;
-        char country[100], attackType[100],
-             targetIndustry[100], defenseMechanism[100];
+        int idAttack, year;
+        float financialLoss;
+        char country[100], attackType[100], targetIndustry[100], defenseMechanism[100];
 
-        scanf("%d %d %f", &idAttack, &year, &financialLoss);
+        scanf("%d", &idAttack);
+        scanf("%d", &year);
+        scanf("%f", &financialLoss);
         scan_quote_string(country);
         scan_quote_string(attackType);
         scan_quote_string(targetIndustry);
         scan_quote_string(defenseMechanism);
 
         /* ---------- calcula tamanhoRegistro ---------- */
-        int tamReg = sizeof(long long) + 2*sizeof(int) + sizeof(float);
+        int tamReg = sizeof(long long int) + 2*sizeof(int) + sizeof(float);
         if (country[0])         tamReg += strlen(country)        + 2;
         if (attackType[0])      tamReg += strlen(attackType)     + 2;
         if (targetIndustry[0])  tamReg += strlen(targetIndustry) + 2;
@@ -1089,7 +1095,7 @@ void funcao_inserirRegistros(char *nomein)
         if (reuse) {                            /* tira da lista de removidos */
             writePos = found;
             if (prev == -1) { fseek(fp, 1, SEEK_SET); fwrite(&foundNext, 8, 1, fp); }
-            else           { fseek(fp, prev+1, SEEK_SET); fwrite(&foundNext, 8, 1, fp); }
+            else           { fseek(fp, prev+5, SEEK_SET); fwrite(&foundNext, 8, 1, fp); }
             dec_nroRegRem(fp);
         } else {                                /* append no fim */
             fseek(fp, 9, SEEK_SET); fread(&writePos, 8, 1, fp);
@@ -1097,18 +1103,33 @@ void funcao_inserirRegistros(char *nomein)
 
         /* ---------- grava o registro ---------- */
         fseek(fp, writePos, SEEK_SET);
-        char removed = '0';  fwrite(&removed, 1, 1, fp);
+        char removed = '0'; 
+        fwrite(&removed, 1, 1, fp);
+
+        if(reuse)
+        fwrite(&foundSize, 4, 1, fp);
+
+        else
         fwrite(&tamReg, 4, 1, fp);
-        long long prox = -1; fwrite(&prox, 8, 1, fp);
+
+        long long int prox = -1;
+        fwrite(&prox, 8, 1, fp);
 
         fwrite(&idAttack, 4, 1, fp);
-        fwrite(&year,     4, 1, fp);
+        fwrite(&year, 4, 1, fp);
         fwrite(&financialLoss, 4, 1, fp);
 
-        if (country[0])         escrever_campoTamVar(fp, country,        '1');
-        if (attackType[0])      escrever_campoTamVar(fp, attackType,     '2');
-        if (targetIndustry[0])  escrever_campoTamVar(fp, targetIndustry, '3');
-        if (defenseMechanism[0])escrever_campoTamVar(fp, defenseMechanism,'4');
+        if(country[0])
+            escrever_campoTamVar(fp, country, '1');
+
+        if(attackType[0]) 
+             escrever_campoTamVar(fp, attackType, '2');
+
+        if(targetIndustry[0])  
+            escrever_campoTamVar(fp, targetIndustry, '3');
+
+        if(defenseMechanism[0])
+            escrever_campoTamVar(fp, defenseMechanism, '4');
 
         /* completa com '$' se reaproveitou bloco maior */
         if (reuse) {
