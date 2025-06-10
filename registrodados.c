@@ -6,6 +6,21 @@
 #define CAMPO_INT 0
 #define CAMPO_FLOAT 1
 
+struct registro_dado{
+
+    int idAttack;
+    int year;
+    float financialLoss;
+    char *country;
+    char *attackType;
+    char *targetIndustry;
+    char *defenseMechanism;
+    char removido;
+    int tamanhoRegistro;
+    long long int prox;
+
+};
+
 void criar_campoTamVar(FILE *fp, char **campo){ // função para ler e armazenar um campo de tamanho variavel
 
     char tempchar;
