@@ -186,7 +186,7 @@ void escrever_dado(FILE *filein, FILE *fileout){ // função para escrever um re
 
 }
 
-dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dados no arquivo binario
+dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dados no arquivo binario (começando do segundo campo)
 
     dados *regdados = malloc(sizeof(dados)); // cria uma struct para armazenar um registro de dados
 
@@ -200,7 +200,6 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
     char tempchar, tempstring[30];
     int i = 0;
 
-    fread(&(regdados->removido), sizeof(char), 1, pos_registro); // armazena campo removido
     fread(&(regdados->tamanhoRegistro), sizeof(int), 1, pos_registro); // armazena o campo tamanhoRegistro
     fread(&(regdados->prox), sizeof(long long int), 1, pos_registro); // armazena o campo prox
     fread(&(regdados->idAttack), sizeof(int), 1, pos_registro); // armazena o campo idAttack
@@ -211,12 +210,15 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
     if(tempchar != '1'){ 
 
-        (regdados->country) = NULL; // caso não tenha o codigo, o campo é vazio
+        (regdados->country) = malloc((sizeof(char))); // aloca o espaço para o ""
+        strcpy(regdados->country, ""); // caso não tenha o codigo, o campo é vazio
         fseek(pos_registro, -1, SEEK_CUR);
 
     }
 
     else{
+
+        fread(&tempchar, sizeof(char), 1, pos_registro);
 
         while(tempchar != '|'){ // enquanto não ler o delimitador "|"
 
@@ -228,10 +230,9 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        tempstring[i] = tempchar;
-        tempstring[i + 1] = '\0';
+        tempstring[i] = '\0';
 
-        (regdados->country) = malloc((i+2)*sizeof(char));
+        (regdados->country) = malloc((i+1)*sizeof(char));
 
         if((regdados->country) == NULL){
 
@@ -246,14 +247,19 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
     }
 
+    fread(&tempchar, sizeof(char), 1, pos_registro);
+
     if(tempchar != '2'){ 
 
-        (regdados->attackType) = NULL; // caso não tenha o codigo, o campo é vazio
-        fseek(pos_registro, -1, SEEK_CUR); 
+        (regdados->defenseMechanism) = malloc((sizeof(char))); // aloca o espaço para o ""
+        strcpy(regdados->attackType, ""); // caso não tenha o codigo, o campo é vazio
+        fseek(pos_registro, -1, SEEK_CUR);
 
     }
 
     else{
+
+        fread(&tempchar, sizeof(char), 1, pos_registro);
 
         while(tempchar != '|'){ // enquanto não ler o delimitador "|"
 
@@ -265,10 +271,9 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        tempstring[i] = tempchar;
-        tempstring[i + 1] = '\0';
+        tempstring[i] = '\0';
 
-        (regdados->attackType) = malloc((i+2)*sizeof(char));
+        (regdados->attackType) = malloc((i+1)*sizeof(char));
 
         if((regdados->attackType) == NULL){
 
@@ -277,20 +282,25 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        strcpy((regdados->attackType), tempstring); // copia a string temporaria para o campo attackType
+        strcpy((regdados->attackType), tempstring); // copia a string temporaria para o campo country
 
         i = 0;
 
     }
 
-    if(tempchar != '3'){ 
+    fread(&tempchar, sizeof(char), 1, pos_registro);
 
-        (regdados->targetIndustry) = NULL; // caso não tenha o codigo, o campo é vazio
+    if(tempchar != '3'){ 
+        
+        (regdados->defenseMechanism) = malloc((sizeof(char))); // aloca o espaço para o ""
+        strcpy(regdados->targetIndustry, ""); // caso não tenha o codigo, o campo é vazio
         fseek(pos_registro, -1, SEEK_CUR);
 
     }
 
     else{
+
+        fread(&tempchar, sizeof(char), 1, pos_registro);
 
         while(tempchar != '|'){ // enquanto não ler o delimitador "|"
 
@@ -302,10 +312,9 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        tempstring[i] = tempchar;
-        tempstring[i + 1] = '\0';
+        tempstring[i] = '\0';
 
-        (regdados->targetIndustry) = malloc((i+2)*sizeof(char));
+        (regdados->targetIndustry) = malloc((i+1)*sizeof(char));
 
         if((regdados->targetIndustry) == NULL){
 
@@ -314,20 +323,25 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        strcpy((regdados->targetIndustry), tempstring); // copia a string temporaria para o campo targetIndustry
+        strcpy((regdados->targetIndustry), tempstring); // copia a string temporaria para o campo country
 
         i = 0;
 
     }
 
+    fread(&tempchar, sizeof(char), 1, pos_registro);
+
     if(tempchar != '4'){ 
 
-        (regdados->defenseMechanism) = NULL; // caso não tenha o codigo, o campo é vazio
+        (regdados->defenseMechanism) = malloc((sizeof(char))); // aloca o espaço para o ""
+        strcpy(regdados->defenseMechanism, ""); // caso não tenha o codigo, o campo é vazio
         fseek(pos_registro, -1, SEEK_CUR);
 
     }
 
     else{
+
+        fread(&tempchar, sizeof(char), 1, pos_registro);
 
         while(tempchar != '|'){ // enquanto não ler o delimitador "|"
 
@@ -339,10 +353,9 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        tempstring[i] = tempchar;
-        tempstring[i + 1] = '\0';
+        tempstring[i] = '\0';
 
-        (regdados->defenseMechanism) = malloc((i+2)*sizeof(char));
+        (regdados->defenseMechanism) = malloc((i+1)*sizeof(char));
 
         if((regdados->defenseMechanism) == NULL){
 
@@ -351,11 +364,13 @@ dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dad
 
         }
 
-        strcpy((regdados->defenseMechanism), tempstring); // copia a string temporaria para o campo defenseMechanism
+        strcpy((regdados->defenseMechanism), tempstring); // copia a string temporaria para o campo country
 
         i = 0;
 
     }
+    
+    return(regdados);
 
 }
 
@@ -381,25 +396,33 @@ void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo){ // 
 
     else if(strcmp(nomecampo, "country") == 0){
 
-        strcpy((regdados->country), (char *)valorcampo);
+        free(regdados->country);
+        regdados->country = malloc(strlen((char *)valorcampo) + 1); // aloca novamente com o tamanho do novo campo
+        strcpy(regdados->country, (char *)valorcampo);
 
     }
 
     else if(strcmp(nomecampo, "attackType") == 0){
 
-        strcpy((regdados->attackType), (char *)valorcampo);
+        free(regdados->attackType);
+        regdados->attackType = malloc(strlen((char *)valorcampo) + 1);
+        strcpy(regdados->attackType, (char *)valorcampo);
 
     }
 
     else if(strcmp(nomecampo, "targetIndustry") == 0){
 
-        strcpy((regdados->targetIndustry), (char *)valorcampo);
+        free(regdados->targetIndustry);
+        regdados->targetIndustry = malloc(strlen((char *)valorcampo) + 1);
+        strcpy(regdados->targetIndustry, (char *)valorcampo);
 
     }
 
     else if(strcmp(nomecampo, "defenseMechanism") == 0){
 
-        strcpy((regdados->defenseMechanism), (char *)valorcampo);
+        free(regdados->defenseMechanism);
+        regdados->defenseMechanism = malloc(strlen((char *)valorcampo) + 1);
+        strcpy(regdados->defenseMechanism, (char *)valorcampo);
 
     }
 
@@ -419,18 +442,87 @@ int atualizar_tamanho(dados *regdados){
                                 + sizeof(int) // year
                                 + sizeof(int); // financialLoss
 
-    if(regdados->country != NULL) 
-        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->country);
+    if((regdados->country)[0]) // adiciona apenas se o campo existir
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->country) + 2; // +2 da keyword e do delimitador
 
-    if(regdados->attackType != NULL)
-        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->attackType);
+    if(regdados->attackType[0])
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->attackType) + 2; 
 
-    if(regdados->targetIndustry != NULL)
-        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->targetIndustry);
+    if(regdados->targetIndustry[0])
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->targetIndustry) + 2;
 
-    if(regdados->defenseMechanism != NULL)
-        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->defenseMechanism);
+    if(regdados->defenseMechanism[0])
+        regdados->tamanhoRegistro = regdados->tamanhoRegistro + strlen(regdados->defenseMechanism) + 2;
 
     return (regdados->tamanhoRegistro);
+
+}
+
+int get_tamanho(dados *regdados){
+
+    return regdados->tamanhoRegistro;
+
+}
+
+int get_idAttack(dados *regdados){
+
+    return regdados->idAttack;
+
+}
+
+int get_year(dados *regdados){
+
+    return regdados->year;
+
+}
+
+float get_financialLoss(dados *regdados){
+
+    return regdados->financialLoss;
+
+}
+
+char *get_country(dados *regdados){
+
+    return regdados->country;
+
+}
+
+char *get_attackType(dados *regdados){
+
+    return regdados->attackType;
+
+}
+
+char *get_targetIndustry(dados *regdados){
+
+    return regdados->targetIndustry;
+
+}
+
+char *get_defenseMechanism(dados *regdados){
+
+    return regdados->defenseMechanism;
+
+}
+
+void liberar_regdados(dados *regdados){
+
+    if(regdados == NULL)
+        return;
+
+    if(regdados->country != NULL)
+        free(regdados->country);
+
+    if(regdados->attackType != NULL)
+        free(regdados->attackType);
+
+    if(regdados->targetIndustry != NULL)
+        free(regdados->targetIndustry);
+
+    if(regdados->defenseMechanism != NULL)
+        free(regdados->defenseMechanism);
+
+    free(regdados);
 
 }

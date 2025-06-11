@@ -12,9 +12,19 @@
     typedef struct registro_dado dados;
 
     dados *ler_regdados(FILE *pos_registro);
-    int atualizar_tamanho(dados *regdados);
     void escrever_dado(FILE *filein, FILE *fileout);
     void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo);
     void escrever_campoTamVar(FILE *fp, char *campo, char keyword);
+    void liberar_regdados(dados *regdados);
+    int atualizar_tamanho(dados *regdados);
+    int get_tamanho(dados *regdados);
+    int get_idAttack(dados *regdados);
+    int get_year(dados *regdados);
+    float get_financialLoss(dados *regdados);
+    char *get_country(dados *regdados);
+    char *get_attackType(dados *regdados);
+    char *get_targetIndustry(dados *regdados);
+    char *get_defenseMechanism(dados *regdados);
+
 
 #endif
