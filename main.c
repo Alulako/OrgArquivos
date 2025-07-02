@@ -50,9 +50,50 @@ int main(){
 
         case 6: // funcionalidade 6
 
-            scanf(" %s", nomearq1); // nome do arquivo binário de entrada
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo binário de saída gerado
 
-            funcao_atualizarRegistros(nomearq1);
+            funcao_lerRegistros(nomearq1, nomearq2);
+            break;
+
+        case 7: // funcionalidade 7
+
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo da árvore b
+
+            funcao_criarArvoreB(nomearq1, nomearq2);
+            break;
+
+        case 8: // funcionalidade 8
+
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo da árvore b
+
+            funcao_pesquisarRegistrosArvoreB(nomearq1, nomearq2);
+            break;
+
+        case 9: // funcionalidade 9
+
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo da árvore b
+
+            funcao_removerArvoreB(nomearq1, nomearq2);
+            break;
+
+        case 10: // funcionalidade 10
+
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo da árvore b
+
+            funcao_inserirArvoreB(nomearq1, nomearq2);
+            break;
+
+        case 11: // funcionalidade 11
+
+            scanf(" %s", nomearq1); // nome do arquivo csv de entrada
+            scanf(" %s", nomearq2); // nome do arquivo da árvore b
+
+            funcao_atualizarArvoreB(nomearq1, nomearq2);
             break;
 
         default: // caso escreva um número diferente

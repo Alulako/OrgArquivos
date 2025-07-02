@@ -13,5 +13,10 @@
     void funcao_removerRegistros(char *nomein);
     void funcao_inserirRegistros(char *nomein);
     void funcao_atualizarRegistros(char *nomein);
+    void funcao_criarArvoreB(char *nomein, char *nomearvb);
+    void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb);
+    void funcao_removerArvoreB(char *nomein, char *nomearvb);
+    void funcao_inserirArvoreB(char *nomein, char *nomearvb);
+    void funcao_atualizarArvoreB(char *nomein, char *nomearvb);
 
 #endif

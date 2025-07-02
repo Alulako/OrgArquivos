@@ -1250,3 +1250,34 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
     binarioNaTela(nomein);
 
 }
+
+void funcao_criarArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 7
+
+
+
+}
+
+void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 8
+
+
+
+}
+
+void funcao_removerArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 9 (NÃO IMPLEMENTADA)
+
+    printf("FUNCIONALIDADE NÃO IMPLEMENTADA\n");
+    return;
+
+}
+
+void funcao_inserirArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 10
+
+
+
+}
+
+void funcao_atualizarArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 11
+
+
+
+}
