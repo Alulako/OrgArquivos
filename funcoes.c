@@ -60,7 +60,7 @@ void modificar_status(FILE *fp, bool abrindo){ // função para modificar o camp
     long long int pos_atual = ftell(fp);
     char status;
 
-    fseek(fp, 0, SEEK_SET); // vai para o campo status do registro de cabeçalho
+    fseek(fp, 0, SEEK_SET); // vai para o campo status do cabeçalho
 
     if(abrindo == true){ // o arquivo está abrindo
 
@@ -453,7 +453,7 @@ void dec_nroRegRem(FILE *fp){ // função para decrementar o campo nroRegRem
 
 }
 
-void inserir_registro(FILE *fp, int idAttack, int year, float financialLoss, 
+long long int inserir_registro(FILE *fp, int idAttack, int year, float financialLoss, 
     char *country, char *attackType, char *targetIndustry, char *defenseMechanism){ // função feita para inserir um registro
 
     int tamanhoRegistro = sizeof(long long int) + 2*sizeof(int) + sizeof(float); // calculo do tamanho do registro
@@ -475,7 +475,7 @@ void inserir_registro(FILE *fp, int idAttack, int year, float financialLoss,
     long long int topo; 
     fread(&topo, sizeof(long long int), 1, fp); // armazena o campo topo
 
-    long long anterior = -1, atual = topo, encontrado = -1, proxencontrado = -1;
+    long long int anterior = -1, atual = topo, encontrado = -1, proxencontrado = -1;
 
     int tamanhoEncontrado = 0;
 
@@ -491,8 +491,8 @@ void inserir_registro(FILE *fp, int idAttack, int year, float financialLoss,
 
         if(remov == '0'){ // caso ocorra algum erro e o registro não esteja logicamente removido
 
-            printf("Falha no processamento do arquivo."); 
-            exit(0); 
+            printf("Falha no processamento do arquivo. "); 
+            exit(0);
 
         }
 
@@ -599,6 +599,8 @@ void inserir_registro(FILE *fp, int idAttack, int year, float financialLoss,
         inc_nroRegArq(fp); // incrementa nroRegArq
 
     }
+
+    return posicaoEscrita;
 
 }
 
@@ -1251,9 +1253,342 @@ void funcao_atualizarRegistros(char *nomein){ // FUNCIONALIDADE 6
 
 }
 
+#define TAM_CABECALHO 44
+#define TAM_NO 44
+
+typedef struct PromoResult{
+
+    int promovido;
+    long long prPromovido;
+    int filhoDireito;
+    int houveSplit;
+
+}PromoResult;
+
+PromoResult split_no(FILE *arquivo, arvbno *no, int rrn, int chave, long long int pr, 
+    int filhoDireito, int *proxRRN, int *nroNos) { // função que realiza o particionamento (split) de um nó cheio
+
+    // Copia as chaves e PRs existentes + nova
+    int chaves[3] = { get_C1(no), get_C2(no), chave };
+    long long prs[3] = { get_PR1(no), get_PR2(no), pr };
+    int filhos[4] = { get_P1(no), get_P2(no), get_P3(no), filhoDireito };
+
+    // Ordena as chaves e os PRs correspondentes
+    for (int i = 0; i < 2; i++)
+        for (int j = i + 1; j < 3; j++)
+            if (chaves[j] < chaves[i]) {
+                int tmp = chaves[i]; 
+                chaves[i] = chaves[j]; 
+                chaves[j] = tmp;
+                
+                long long tmpPr = prs[i]; 
+                prs[i] = prs[j]; 
+                prs[j] = tmpPr;
+            }
+
+    int tipoAtual = get_tipoNo(no);
+
+    // Cria novo nó (novo filho direito)
+    arvbno *novoNo = criar_no();
+    set_tipoNo(novoNo, tipoAtual);
+    set_nroChaves(novoNo, 1);
+    set_C1(novoNo, chaves[2]);
+    set_PR1(novoNo, prs[2]);
+
+    // Atualiza o nó original (vai manter a menor chave)
+    set_C1(no, chaves[0]); 
+    set_PR1(no, prs[0]);
+    set_C2(no, -1);        
+    set_PR2(no, -1);
+    set_nroChaves(no, 1);
+
+    // Se for nó interno, reorganiza ponteiros filhos
+    if (tipoAtual != -1) {
+        set_P1(no, filhos[0]);
+        set_P2(no, filhos[1]);
+        set_P3(no, -1);
+
+        set_P1(novoNo, filhos[2]);
+        set_P2(novoNo, filhos[3]);
+        
+    }
+
+    int novoRRN = (*proxRRN);
+
+    (*proxRRN)++;
+    (*nroNos)++;
+
+    // Escreve os nós atualizados no arquivo
+    fseek(arquivo, TAM_CABECALHO + rrn * TAM_NO, SEEK_SET);
+    escrever_no(arquivo, no);
+
+    fseek(arquivo, TAM_CABECALHO + novoRRN * TAM_NO, SEEK_SET);
+    escrever_no(arquivo, novoNo);
+
+    // Retorna chave promovida (chave do meio = chaves[1])
+    return (PromoResult){ chaves[1], prs[1], novoRRN, 1 };
+}
+
+PromoResult inserir_rec(FILE *arquivo, int rrn, int chave, long long int pr, int *proxRRN, int *nroNos) { // função recursiva principal da inserção
+
+    if (rrn == -1) {
+        // Árvore vazia: cria o primeiro nó folha
+        arvbno *novoNo = criar_no();
+        set_tipoNo(novoNo, -1);
+        set_nroChaves(novoNo, 1);
+        set_P1(novoNo, -1);
+        set_C1(novoNo, chave);
+        set_PR1(novoNo, pr);
+        set_C2(novoNo, -1);
+        set_PR2(novoNo, -1);
+        set_P2(novoNo, -1);
+        set_P3(novoNo, -1);
+
+        int novoRRN = *proxRRN;
+
+        (*proxRRN)++;
+        (*nroNos)++;
+
+        fseek(arquivo, TAM_CABECALHO + novoRRN * TAM_NO, SEEK_SET);
+        escrever_no(arquivo, novoNo);
+
+        return (PromoResult){ .houveSplit = 0, .filhoDireito = novoRRN };
+    }
+
+    // Carrega nó do disco
+    fseek(arquivo, TAM_CABECALHO + rrn * TAM_NO, SEEK_SET);
+    arvbno *no = criar_no();
+
+    int tempInt;
+    long long tempLong;
+
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_tipoNo(no, tempInt);
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_nroChaves(no, tempInt);
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_P1(no, tempInt);
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_C1(no, tempInt);
+    fread(&tempLong, sizeof(long long int), 1, arquivo); 
+    set_PR1(no, tempLong);
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_P2(no, tempInt);
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_C2(no, tempInt);
+    fread(&tempLong, sizeof(long long int), 1, arquivo); 
+    set_PR2(no, tempLong);
+    fread(&tempInt, sizeof(int), 1, arquivo); 
+    set_P3(no, tempInt);
+
+    // Evita duplicata
+    if (chave == get_C1(no) || (get_nroChaves(no) == 2 && chave == get_C2(no))) {
+        free(no);
+        return (PromoResult){ .houveSplit = 0 };
+    }
+
+    if (get_tipoNo(no) == -1) {
+        // Nó folha
+        if (get_nroChaves(no) == 1) {
+            // Inserção direta
+            if (chave < get_C1(no)) {
+                set_C2(no, get_C1(no)); 
+                set_PR2(no, get_PR1(no));
+                set_C1(no, chave);  
+                set_PR1(no, pr);
+            } else {
+                set_C2(no, chave); 
+                set_PR2(no, pr);
+            }
+            set_nroChaves(no, 2);
+            fseek(arquivo, TAM_CABECALHO + rrn * TAM_NO, SEEK_SET);
+            escrever_no(arquivo, no);
+            return (PromoResult){ .houveSplit = 0 };
+        } else {
+            // Split em folha
+            return split_no(arquivo, no, rrn, chave, pr, -1, proxRRN, nroNos);
+        }
+    } else {
+        // Nó interno
+        int filhoRRN;
+
+        if (chave < get_C1(no))
+            filhoRRN = get_P1(no);
+
+        else if (get_nroChaves(no) == 1 || chave < get_C2(no))
+            filhoRRN = get_P2(no);
+
+        else 
+            filhoRRN = get_P3(no);
+
+        PromoResult res = inserir_rec(arquivo, filhoRRN, chave, pr, proxRRN, nroNos);
+
+        if (!res.houveSplit) {
+            free(no);
+            return (PromoResult){ .houveSplit = 0 };
+        }
+
+        if (get_nroChaves(no) == 1) {
+            // Inserção direta da promoção
+            if (res.promovido < get_C1(no)) {
+                set_C2(no, get_C1(no)); set_PR2(no, get_PR1(no));
+                set_C1(no, res.promovido); set_PR1(no, res.prPromovido);
+                set_P3(no, get_P2(no));
+                set_P2(no, res.filhoDireito);
+            } else {
+                set_C2(no, res.promovido); set_PR2(no, res.prPromovido);
+                set_P3(no, res.filhoDireito);
+            }
+            set_nroChaves(no, 2);
+            fseek(arquivo, TAM_CABECALHO + rrn * TAM_NO, SEEK_SET);
+            escrever_no(arquivo, no);
+            return (PromoResult){ .houveSplit = 0 };
+        } else {
+            // Split com promoção
+            return split_no(arquivo, no, rrn, res.promovido, res.prPromovido, res.filhoDireito, proxRRN, nroNos);
+        }
+    }
+}
+
+void inserirNaArvoreB(FILE *arquivo, int chave, long long int pr) { // função que gerencia a raiz e atualiza cabeçalho
+    char status;
+    int noRaiz, proxRRN, nroNos;
+
+    fseek(arquivo, 0, SEEK_SET);
+    fread(&status, sizeof(char), 1, arquivo);
+    fread(&noRaiz, sizeof(int), 1, arquivo);
+    fread(&proxRRN, sizeof(int), 1, arquivo);
+    fread(&nroNos, sizeof(int), 1, arquivo);
+
+    PromoResult res = inserir_rec(arquivo, noRaiz, chave, pr, &proxRRN, &nroNos);
+
+    // Se a árvore estava vazia, a raiz é o nó recém-criado
+    if (noRaiz == -1)
+        noRaiz = res.filhoDireito;
+
+    // Se houve split no nível da raiz, cria uma nova raiz
+    if (res.houveSplit) {
+        arvbno *novaRaiz = criar_no();
+        set_tipoNo(novaRaiz, 0); // Nova raiz, tipo 0
+        set_nroChaves(novaRaiz, 1);
+        set_P1(novaRaiz, noRaiz);
+        set_C1(novaRaiz, res.promovido);
+        set_PR1(novaRaiz, res.prPromovido);
+        set_P2(novaRaiz, res.filhoDireito);
+        set_P3(novaRaiz, -1);
+
+        int tipoFilho;
+
+        // Verifica e ajusta o tipo do filho esquerdo (noRaiz)
+        fseek(arquivo, TAM_CABECALHO + noRaiz * TAM_NO, SEEK_SET);
+        fread(&tipoFilho, sizeof(int), 1, arquivo);
+
+        if (tipoFilho != -1) { // Se não for folha, atualiza para intermediário
+            fseek(arquivo, TAM_CABECALHO + noRaiz * TAM_NO, SEEK_SET);
+            tipoFilho = 1;
+            fwrite(&tipoFilho, sizeof(int), 1, arquivo);
+        }
+
+        // Verifica e ajusta o tipo do filho direito (res.filhoDireito)
+        fseek(arquivo, TAM_CABECALHO + res.filhoDireito * TAM_NO, SEEK_SET);
+        fread(&tipoFilho, sizeof(int), 1, arquivo);
+
+        if (tipoFilho != -1) { // Se não for folha, atualiza para intermediário
+            fseek(arquivo, TAM_CABECALHO + res.filhoDireito * TAM_NO, SEEK_SET);
+            tipoFilho = 1;
+            fwrite(&tipoFilho, sizeof(int), 1, arquivo);
+        }
+
+        noRaiz = proxRRN; // Novo nó da raiz
+
+        proxRRN++;
+        nroNos++;
+
+        fseek(arquivo, TAM_CABECALHO + noRaiz * TAM_NO, SEEK_SET);
+        escrever_no(arquivo, novaRaiz);
+        
+    }
+
+    // Atualiza o cabeçalho da árvore B
+    fseek(arquivo, 1, SEEK_SET); // pula campo status
+    fwrite(&noRaiz, sizeof(int), 1, arquivo);
+    fwrite(&proxRRN, sizeof(int), 1, arquivo);
+    fwrite(&nroNos, sizeof(int), 1, arquivo);
+}
+
 void funcao_criarArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 7
 
+    FILE *arqbin = fopen(nomein, "rb"); // arquivo binario de registros
+    FILE *arvb = fopen(nomearvb, "wb+"); // arquivo da arvore b
 
+    int tempint, tamanho_registro;
+    char tempchar;
+    long long int fim;
+
+    if(arqbin == NULL || arvb == NULL){
+
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
+
+    }
+
+    escrever_cabecalhoarvb(arvb);
+
+    modificar_status(arvb, true);
+
+    fseek(arqbin, 17, SEEK_SET);
+    fread(&tempint, sizeof(int), 1, arqbin); 
+
+    if(tempint == 0){ // checa se existe algum registro que não foi removido
+
+        modificar_status(arvb, false);
+
+        fclose(arqbin);
+        fclose(arvb);
+
+        binarioNaTela(nomearvb);
+
+        return;
+    }
+
+    fseek(arqbin, 0, SEEK_END); // vai para o final do arquivo
+
+    fim = ftell(arqbin); // armazena o fim do arquivo
+
+    fseek(arqbin, 276, SEEK_SET); // pula o registro de cabeçalho do arquivo binario
+
+    while(ftell(arqbin) < fim){
+
+        long long int offset = ftell(arqbin); // armazena o valor do ByteOffset do registro
+
+        fread(&tempchar, sizeof(char), 1, arqbin); // armazena removido
+        fread(&tamanho_registro, sizeof(int), 1, arqbin); // armazena tamanhoRegistro
+
+        if(tempchar == '0'){ // caso o registro não tenha sido removido
+
+            fseek(arqbin, 8, SEEK_CUR); // pula o campo prox
+            fread(&tempint, sizeof(int), 1, arqbin); // armazena o idAttack
+
+            inserirNaArvoreB(arvb, tempint, offset); // chama função para inserir o nó na árvore
+
+            fseek(arqbin, (tamanho_registro - 12), SEEK_CUR); // pula para o proximo registro
+
+        }
+
+        else{ // caso o registro tenha sido removido
+
+            fseek(arqbin, tamanho_registro, SEEK_CUR); // pula para o proximo registro
+
+        }
+
+    }   
+
+    modificar_status(arvb, false);
+
+    fclose(arqbin);
+    fclose(arvb);
+
+    binarioNaTela(nomearvb);
 
 }
 
@@ -1272,7 +1607,70 @@ void funcao_removerArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 9 (N
 
 void funcao_inserirArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 10
 
+    FILE *arqbin = fopen(nomein, "rb+"); // arquivo binario de registros
+    FILE *arvb = fopen(nomearvb, "rb+"); // arquivo da arvore b
 
+    int n;
+
+    if(arqbin == NULL || arvb == NULL){
+
+        printf("Falha no processamento do arquivo. ");
+        exit(0);
+
+    }
+
+    modificar_status(arqbin, true);
+    modificar_status(arvb, true);
+
+    scanf("%d", &n); // armazena o número de inserções que serão feitas
+
+    for(int k = 0; k < n; k++){
+
+        int idAttack, year;
+        float financialLoss;
+        char checkidAttack[20], checkyear[10], checkfinancialLoss[20], country[50], attackType[50], targetIndustry[50], defenseMechanism[50];
+
+        scan_quote_string(checkidAttack); // leitura dos campos
+        scan_quote_string(checkyear);
+        scan_quote_string(checkfinancialLoss);
+        scan_quote_string(country);
+        scan_quote_string(attackType);
+        scan_quote_string(targetIndustry);
+        scan_quote_string(defenseMechanism);
+
+        if(!(checkidAttack[0])) // caso o campo seja vazio
+            idAttack = -1;
+
+        else // caso não seja
+            idAttack = strtol(checkidAttack, NULL, 10); // converte para inteiro
+
+        if(!(checkyear[0])) // caso o campo seja vazio
+            year = -1;
+
+        else // caso não seja
+            year = strtol(checkyear, NULL, 10); 
+
+        if(!(checkfinancialLoss[0])) // caso o campo seja vazio
+            financialLoss = -1.0;
+
+        else // caso não seja
+            financialLoss = strtof(checkfinancialLoss, NULL); // converte para float
+
+        long long int posicaoEscrita = inserir_registro(arqbin, idAttack, year, financialLoss, country, 
+                                                        attackType, targetIndustry, defenseMechanism);
+
+        inserirNaArvoreB(arvb, idAttack, posicaoEscrita);
+
+    }
+
+    modificar_status(arqbin, false);
+    modificar_status(arvb, false);
+
+    fclose(arqbin);
+    fclose(arvb);
+
+    binarioNaTela(nomein);
+    binarioNaTela(nomearvb);
 
 }
 

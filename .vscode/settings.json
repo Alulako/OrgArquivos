@@ -1,6 +1,7 @@
 {
   "files.associations": {
     "funcoes.h": "c",
-    "registrodados.h": "c"
+    "registrodados.h": "c",
+    "stdlib.h": "c"
   }
 }

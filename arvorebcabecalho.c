@@ -41,6 +41,9 @@ void escrever_cabecalhoarvb(FILE *fileout){ // função para escrever o cabeçal
     fwrite(&(arvb_cabecalho->proxRRN), sizeof(int), 1, fileout); // escreve proRRN
     fwrite(&(arvb_cabecalho->nroNos), sizeof(int), 1, fileout); // escreve nroNos
 
+    char lixo[] = "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$";
+    fwrite(lixo, sizeof(char), 31, fileout); // escreve o lixo
+
     free(arvb_cabecalho);
 
 }

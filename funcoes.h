@@ -6,6 +6,8 @@
 
     #include "registrocabecalho.h"
     #include "registrodados.h"
+    #include "arvorebcabecalho.h"
+    #include "arvorebno.h"
 
     void funcao_lerRegistros(char *nomein, char *nomeout);
     void funcao_imprimirRegistros(char *nomeout);
