@@ -5,7 +5,7 @@
 #include <ctype.h> // por conta da função isspace() utilizada em scan_quote_string
 #include "arvorebcabecalho.h"
 #include "arvorebno.h"
-#include "registrodados.c"
+#include "registrodados.h"
 
 
 #define CAMPO_INT 0
