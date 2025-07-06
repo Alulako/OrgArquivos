@@ -1644,7 +1644,7 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
     int n; scanf("%d", &n);
     for (int i = 0; i < n; i++) {
         int m; scanf("%d", &m);
-        char  **campos  = malloc(m * sizeof(char*));
+        char  **campos   = malloc(m * sizeof(char*));
         void   **valores = malloc(m * sizeof(void*));
         if (!campos || !valores) { printf("Falha no processamento do arquivo. "); exit(0); }
 
@@ -1729,8 +1729,8 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
                 }
 
                 if (ok) {
-                    // imprime o registro (ponteiro no início)
-                    fseek(filein, offset, SEEK_SET);
+                    // posiciona logo após o byte de 'removido'
+                    fseek(filein, offset + 1, SEEK_SET);
                     imprimir_registro(filein);
                     registroEncontrado = true;
                 }
@@ -1791,6 +1791,7 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
     fclose(filein);
     fclose(arvb);
 }
+
 
 
 void funcao_removerArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 9 (NÃO IMPLEMENTADA)
