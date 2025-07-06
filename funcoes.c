@@ -1862,26 +1862,19 @@ void funcao_inserirArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 10
 
 }
 
-/*======================================================================
- *  ──  A U X I L I A R   1  ──   atualiza registro (realoca se crescer)
- *  devolve:
- *     - novo offset onde o registro ficou (==offset_antigo se coube)
- *  recebe:
- *     - dados    .. ponteiro  FILE* do arquivo de dados   (aberto rb+)
- *     - offset   .. byteOffset do ‘removido’ do registro original
- *     - p, camposA, valoresA .. vetores da lista de alterações
- *  OBS: reaproveita rotinas já existentes (ler_regdados, atualizar_regdados,
- *       remover_registro, inserir_registro)
- *====================================================================*/
-static long long atualizarRegistroComRealoc(FILE *dados,
+/* ================================================================
+ *  A U X 1 – atualizarRegistroComRealoc
+ *    >> renomeado parâmetro FILE* de "dados" -> "fpDados"
+ * ================================================================*/
+static long long atualizarRegistroComRealoc(FILE *fpDados,
                                             long long offset_antigo,
                                             int p,
                                             char **camposA,
                                             void **valoresA)
 {
     /* carrego o registro existente --------------------------- */
-    fseek(dados, offset_antigo + 1, SEEK_SET);         /* pula byte 'removido'  */
-    dados *reg = ler_regdados(dados);                  /* já move ponteiro      */
+    fseek(fpDados, offset_antigo + 1, SEEK_SET);         /* pula byte 'removido'  */
+    dados *reg = ler_regdados(fpDados);                  /* já move ponteiro      */
     int tamAntigo = get_tamanho(reg);
 
     /* aplico as alterações ----------------------------------- */
@@ -1892,29 +1885,29 @@ static long long atualizarRegistroComRealoc(FILE *dados,
     /* == cabe no espaço antigo? ============================== */
     if (tamNovo <= tamAntigo) {
         /* sobrescreve in-place ------------------------------- */
-        fseek(dados, offset_antigo, SEEK_SET);
-        char remov = '0'; fwrite(&remov, 1, 1, dados);
-        fwrite(&tamAntigo, 4, 1, dados);
+        fseek(fpDados, offset_antigo, SEEK_SET);
+        char remov = '0'; fwrite(&remov, 1, 1, fpDados);
+        fwrite(&tamAntigo, 4, 1, fpDados);
 
         long long prox = -1;
-        fwrite(&prox, 8, 1, dados);
+        fwrite(&prox, 8, 1, fpDados);
 
         int   id = get_idAttack(reg);
         int   yr = get_year(reg);
         float fl = get_financialLoss(reg);
-        fwrite(&id, 4, 1, dados);
-        fwrite(&yr, 4, 1, dados);
-        fwrite(&fl, 4, 1, dados);
+        fwrite(&id, 4, 1, fpDados);
+        fwrite(&yr, 4, 1, fpDados);
+        fwrite(&fl, 4, 1, fpDados);
 
         char *c;
-        c = get_country(reg);          if (c[0]) escrever_campoTamVar(dados, c, '1');
-        c = get_attackType(reg);       if (c[0]) escrever_campoTamVar(dados, c, '2');
-        c = get_targetIndustry(reg);   if (c[0]) escrever_campoTamVar(dados, c, '3');
-        c = get_defenseMechanism(reg); if (c[0]) escrever_campoTamVar(dados, c, '4');
+        c = get_country(reg);          if (c[0]) escrever_campoTamVar(fpDados, c, '1');
+        c = get_attackType(reg);       if (c[0]) escrever_campoTamVar(fpDados, c, '2');
+        c = get_targetIndustry(reg);   if (c[0]) escrever_campoTamVar(fpDados, c, '3');
+        c = get_defenseMechanism(reg); if (c[0]) escrever_campoTamVar(fpDados, c, '4');
 
         /* lixo para completar o espaço que sobrou */
         for (int i = 0; i < tamAntigo - tamNovo; i++) {
-            char l = '$'; fwrite(&l, 1, 1, dados);
+            char l = '$'; fwrite(&l, 1, 1, fpDados);
         }
 
         liberar_regdados(reg);
@@ -1922,8 +1915,8 @@ static long long atualizarRegistroComRealoc(FILE *dados,
     }
 
     /* == não coube  →  remove e reinsere ====================== */
-    remover_registro(dados, offset_antigo);
-    long long novoOff = inserir_registro(dados,
+    remover_registro(fpDados, offset_antigo);
+    long long novoOff = inserir_registro(fpDados,
                                          get_idAttack(reg), get_year(reg),
                                          get_financialLoss(reg),
                                          get_country(reg), get_attackType(reg),
@@ -1933,23 +1926,20 @@ static long long atualizarRegistroComRealoc(FILE *dados,
     return novoOff;                                 /* offset atualizado */
 }
 
-/*======================================================================
- *  ──  A U X I L I A R   2  ──   ajusta PR na árvore-B
- *     devolve 1 se conseguiu encontrar & atualizar, 0 se não achou.
- *====================================================================*/
+/* ================================================================
+ *  A U X 2 – atualizarPR_arvoreB
+ *      >> removida linha solta usando rrn antes da declaração
+ * ================================================================*/
 static int atualizarPR_arvoreB(FILE *arvb,
                                int chave,
                                long long novoPR)
 {
-    const int TAM_CAB = 44;
-    const int TAM_NO  = 44;
-
     int noRaiz;
     fseek(arvb, 1, SEEK_SET); fread(&noRaiz, 4, 1, arvb);
 
     int rrn = noRaiz;
     while (rrn != -1) {
-        long long offNo = TAM_CAB + (long long)rrn * TAM_NO;
+        long long offNo = TAM_CABECALHO + (long long)rrn * TAM_NO;
         fseek(arvb, offNo, SEEK_SET);
 
         int tipo, nCh, P1, C1, P2, C2, P3;
@@ -1983,20 +1973,22 @@ static int atualizarPR_arvoreB(FILE *arvb,
     return 0;                                   /* não encontrou      */
 }
 
-/*======================================================================
- *  F U N C I O N A L I D A D E   1 1
- *====================================================================*/
+/* ================================================================
+ *  FUNCIONALIDADE 11 – funcao_atualizarArvoreB
+ *    >> variável FILE* mudou de "dados" -> "fpDados".
+ *    >> todas as chamadas internas ajustadas.
+ * ================================================================*/
 void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
 {
-    FILE *dados = fopen(nomeDados, "rb+");
-    FILE *arvb  = fopen(nomeArvb , "rb+");
-    if (!dados || !arvb) {
+    FILE *fpDados = fopen(nomeDados, "rb+");
+    FILE *arvb    = fopen(nomeArvb , "rb+");
+    if (!fpDados || !arvb) {
         printf("Falha no processamento do arquivo. ");
         exit(0);
     }
 
-    modificar_status(dados, true);
-    modificar_status(arvb , true);
+    modificar_status(fpDados, true);
+    modificar_status(arvb   , true);
 
     int n; scanf("%d", &n);                       /* nº de operações */
 
@@ -2069,28 +2061,28 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
                 bool ok = true;
                 for (int i = 0; i < m && ok; i++) {
                     if (!strcmp(camposB[i],"idAttack")) continue;      /* já garantido */
-                    fseek(dados, off, SEEK_SET);
+                    fseek(fpDados, off, SEEK_SET);
 
                     if (!strcmp(camposB[i],"year")) {
-                        fseek(dados, 1+4+8+4, SEEK_CUR);
-                        int yr; fread(&yr,4,1,dados);
+                        fseek(fpDados, 1+4+8+4, SEEK_CUR);
+                        int yr; fread(&yr,4,1,fpDados);
                         ok = (yr == *(int*)valoresB[i]);
                     }
                     else if (!strcmp(camposB[i],"financialLoss")) {
-                        fseek(dados, 1+4+8+4+4, SEEK_CUR);
-                        float fl; fread(&fl,4,1,dados);
+                        fseek(fpDados, 1+4+8+4+4, SEEK_CUR);
+                        float fl; fread(&fl,4,1,fpDados);
                         ok = (fl == *(float*)valoresB[i]);
                     }
                     else {
                         char kw = (!strcmp(camposB[i],"country")? '1':
                                    !strcmp(camposB[i],"attackType")? '2':
                                    !strcmp(camposB[i],"targetIndustry")? '3':'4');
-                        ok = filtrar_registroTamVar(dados, kw, (char*)valoresB[i]);
+                        ok = filtrar_registroTamVar(fpDados, kw, (char*)valoresB[i]);
                     }
                 }
 
                 if (ok) {
-                    long long novoOff = atualizarRegistroComRealoc(dados, off,
+                    long long novoOff = atualizarRegistroComRealoc(fpDados, off,
                                                                     p, camposA, valoresA);
                     if (novoOff != off)          /* registro “andou” */
                         atualizarPR_arvoreB(arvb, chaveBusca, novoOff);
@@ -2101,15 +2093,15 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
 
         /* =====  2) varredura linear caso não use índice ===== */
         if (!usaIndice) {
-            fseek(dados, 276, SEEK_SET);
-            long long fim; fseek(dados, 0, SEEK_END); fim = ftell(dados);
+            fseek(fpDados, 276, SEEK_SET);
+            long long fim; fseek(fpDados, 0, SEEK_END); fim = ftell(fpDados);
 
-            while (ftell(dados) < fim) {
-                char rem; fread(&rem,1,1,dados);
-                long long offIni = ftell(dados) - 1;
+            while (ftell(fpDados) < fim) {
+                char rem; fread(&rem,1,1,fpDados);
+                long long offIni = ftell(fpDados) - 1;
 
                 if (rem == '0') {
-                    dados *reg = ler_regdados(dados);      /* já avança ponteiro */
+                    dados *reg = ler_regdados(fpDados);      /* já avança ponteiro */
 
                     bool ok = true;
                     for (int i = 0; i < m && ok; i++) {
@@ -2132,7 +2124,7 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
 
                     if (ok) {
                         int chave = get_idAttack(reg);
-                        long long novoOff = atualizarRegistroComRealoc(dados, offIni,
+                        long long novoOff = atualizarRegistroComRealoc(fpDados, offIni,
                                                                         p, camposA, valoresA);
                         if (novoOff != offIni)
                             atualizarPR_arvoreB(arvb, chave, novoOff);
@@ -2141,8 +2133,8 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
                     liberar_regdados(reg);
                 }
                 else {
-                    int tam; fread(&tam,4,1,dados);
-                    fseek(dados, tam, SEEK_CUR);
+                    int tam; fread(&tam,4,1,fpDados);
+                    fseek(fpDados, tam, SEEK_CUR);
                 }
             }
         }
@@ -2156,9 +2148,9 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
         free(camposB); free(valoresB); free(camposA); free(valoresA);
     }
 
-    modificar_status(dados, false);
-    modificar_status(arvb , false);
-    fclose(dados); fclose(arvb);
+    modificar_status(fpDados, false);
+    modificar_status(arvb   , false);
+    fclose(fpDados); fclose(arvb);
 
     binarioNaTela(nomeDados);
     binarioNaTela(nomeArvb);
