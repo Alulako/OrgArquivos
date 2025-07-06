@@ -171,192 +171,118 @@ void escrever_dado(FILE *filein, FILE *fileout){ // função para escrever um re
 
 }
 
-dados *ler_regdados(FILE *pos_registro){ // função para ler um registro de dados no arquivo binario (começando do segundo campo)
-
-    dados *regdados = malloc(sizeof(dados)); // cria uma struct para armazenar um registro de dados
-
-    if(regdados == NULL){
-
+dados *ler_regdados(FILE *pos_registro) {
+    dados *regdados = malloc(sizeof(dados));
+    if (regdados == NULL) {
         printf("Falha no processamento do arquivo. ");
         exit(0);
-
     }
 
     char tempchar, tempstring[30];
     int i = 0;
 
-    fread(&(regdados->tamanhoRegistro), sizeof(int), 1, pos_registro); // armazena o campo tamanhoRegistro
-    fread(&(regdados->prox), sizeof(long long int), 1, pos_registro); // armazena o campo prox
-    fread(&(regdados->idAttack), sizeof(int), 1, pos_registro); // armazena o campo idAttack
-    fread(&(regdados->year), sizeof(int), 1, pos_registro); // armazena o campo year
-    fread(&(regdados->financialLoss), sizeof(float), 1, pos_registro); // armazena o campo financialLoss
+    // ====================
+    // Campos fixos:
+    // ====================
+    fread(&regdados->tamanhoRegistro, sizeof(int),           1, pos_registro);
+    fread(&regdados->prox,             sizeof(long long int),1, pos_registro);
+    fread(&regdados->idAttack,         sizeof(int),           1, pos_registro);
+    fread(&regdados->year,             sizeof(int),           1, pos_registro);
+    fread(&regdados->financialLoss,    sizeof(float),         1, pos_registro);
 
+    // ====================
+    // country (keyword '1')
+    // ====================
     fread(&tempchar, sizeof(char), 1, pos_registro);
-
-    if(tempchar != '1'){ 
-
-        (regdados->country) = malloc((sizeof(char))); // aloca o espaço para o ""
-        strcpy(regdados->country, ""); // caso não tenha o codigo, o campo é vazio
+    if (tempchar != '1') {
+        regdados->country = malloc(1);
+        if (!regdados->country) { printf("Falha no processamento do arquivo. "); exit(0); }
+        regdados->country[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
-
-    }
-
-    else{
-
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
-
-            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
-            
-            i++;
-
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        }
-
-        tempstring[i] = '\0';
-
-        (regdados->country) = malloc((i+1)*sizeof(char));
-
-        if((regdados->country) == NULL){
-
-            printf("Falha no processamento do arquivo. ");
-            exit(0); 
-
-        }
-
-        strcpy((regdados->country), tempstring); // copia a string temporaria para o campo country
-
+    } else {
         i = 0;
-
+        fread(&tempchar, sizeof(char), 1, pos_registro);
+        while (tempchar != '|') {
+            tempstring[i++] = tempchar;
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+        }
+        tempstring[i] = '\0';
+        regdados->country = malloc(i + 1);
+        if (!regdados->country) { printf("Falha no processamento do arquivo. "); exit(0); }
+        strcpy(regdados->country, tempstring);
+        i = 0;
     }
 
+    // ====================
+    // attackType (keyword '2')
+    // ====================
     fread(&tempchar, sizeof(char), 1, pos_registro);
-
-    if(tempchar != '2'){ 
-
-        (regdados->defenseMechanism) = malloc((sizeof(char))); // aloca o espaço para o ""
-        strcpy(regdados->attackType, ""); // caso não tenha o codigo, o campo é vazio
+    if (tempchar != '2') {
+        regdados->attackType = malloc(1);
+        if (!regdados->attackType) { printf("Falha no processamento do arquivo. "); exit(0); }
+        regdados->attackType[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
-
-    }
-
-    else{
-
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
-
-            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
-            
-            i++;
-
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        }
-
-        tempstring[i] = '\0';
-
-        (regdados->attackType) = malloc((i+1)*sizeof(char));
-
-        if((regdados->attackType) == NULL){
-
-            printf("Falha no processamento do arquivo. ");
-            exit(0); 
-
-        }
-
-        strcpy((regdados->attackType), tempstring); // copia a string temporaria para o campo country
-
+    } else {
         i = 0;
-
+        fread(&tempchar, sizeof(char), 1, pos_registro);
+        while (tempchar != '|') {
+            tempstring[i++] = tempchar;
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+        }
+        tempstring[i] = '\0';
+        regdados->attackType = malloc(i + 1);
+        if (!regdados->attackType) { printf("Falha no processamento do arquivo. "); exit(0); }
+        strcpy(regdados->attackType, tempstring);
+        i = 0;
     }
 
+    // ====================
+    // targetIndustry (keyword '3')
+    // ====================
     fread(&tempchar, sizeof(char), 1, pos_registro);
-
-    if(tempchar != '3'){ 
-        
-        (regdados->defenseMechanism) = malloc((sizeof(char))); // aloca o espaço para o ""
-        strcpy(regdados->targetIndustry, ""); // caso não tenha o codigo, o campo é vazio
+    if (tempchar != '3') {
+        regdados->targetIndustry = malloc(1);
+        if (!regdados->targetIndustry) { printf("Falha no processamento do arquivo. "); exit(0); }
+        regdados->targetIndustry[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
-
-    }
-
-    else{
-
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
-
-            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
-            
-            i++;
-
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        }
-
-        tempstring[i] = '\0';
-
-        (regdados->targetIndustry) = malloc((i+1)*sizeof(char));
-
-        if((regdados->targetIndustry) == NULL){
-
-            printf("Falha no processamento do arquivo. ");
-            exit(0); 
-
-        }
-
-        strcpy((regdados->targetIndustry), tempstring); // copia a string temporaria para o campo country
-
+    } else {
         i = 0;
-
+        fread(&tempchar, sizeof(char), 1, pos_registro);
+        while (tempchar != '|') {
+            tempstring[i++] = tempchar;
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+        }
+        tempstring[i] = '\0';
+        regdados->targetIndustry = malloc(i + 1);
+        if (!regdados->targetIndustry) { printf("Falha no processamento do arquivo. "); exit(0); }
+        strcpy(regdados->targetIndustry, tempstring);
+        i = 0;
     }
 
+    // ====================
+    // defenseMechanism (keyword '4')
+    // ====================
     fread(&tempchar, sizeof(char), 1, pos_registro);
-
-    if(tempchar != '4'){ 
-
-        (regdados->defenseMechanism) = malloc((sizeof(char))); // aloca o espaço para o ""
-        strcpy(regdados->defenseMechanism, ""); // caso não tenha o codigo, o campo é vazio
+    if (tempchar != '4') {
+        regdados->defenseMechanism = malloc(1);
+        if (!regdados->defenseMechanism) { printf("Falha no processamento do arquivo. "); exit(0); }
+        regdados->defenseMechanism[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
-
-    }
-
-    else{
-
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        while(tempchar != '|'){ // enquanto não ler o delimitador "|"
-
-            tempstring[i] = tempchar; // armazena os caracteres em uma string temporaria
-            
-            i++;
-
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-
-        }
-
-        tempstring[i] = '\0';
-
-        (regdados->defenseMechanism) = malloc((i+1)*sizeof(char));
-
-        if((regdados->defenseMechanism) == NULL){
-
-            printf("Falha no processamento do arquivo. ");
-            exit(0); 
-
-        }
-
-        strcpy((regdados->defenseMechanism), tempstring); // copia a string temporaria para o campo country
-
+    } else {
         i = 0;
-
+        fread(&tempchar, sizeof(char), 1, pos_registro);
+        while (tempchar != '|') {
+            tempstring[i++] = tempchar;
+            fread(&tempchar, sizeof(char), 1, pos_registro);
+        }
+        tempstring[i] = '\0';
+        regdados->defenseMechanism = malloc(i + 1);
+        if (!regdados->defenseMechanism) { printf("Falha no processamento do arquivo. "); exit(0); }
+        strcpy(regdados->defenseMechanism, tempstring);
+        i = 0;
     }
-    
-    return(regdados);
 
+    return regdados;
 }
 
 void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo){ // função para atualizar os dados em um registro
