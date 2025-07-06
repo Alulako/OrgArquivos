@@ -1634,7 +1634,7 @@ void funcao_criarArvoreB(char *nomein, char *nomearvb){ // FUNCIONALIDADE 7
 }
 
 void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCIONALIDADE 8
-    FILE *filein = fopen(nomein,   "rb");
+    FILE *filein = fopen(nomein, "rb");
     FILE *arvb   = fopen(nomearvb, "rb");
     if (!filein || !arvb) {
         printf("Falha no processamento do arquivo. ");
@@ -1651,7 +1651,7 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
         bool usaIndice  = false;
         int  valorChave = -1;
 
-        // lê filtros
+        /* ---------- leitura dos filtros ---------- */
         for (int j = 0; j < m; j++) {
             char buf[17];
             scanf(" %16s", buf);
@@ -1661,23 +1661,20 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
                 int *v = malloc(sizeof(int));
                 scanf("%d", v);
                 valores[j] = v;
-                usaIndice = true;
+                usaIndice  = true;
                 valorChave = *v;
-            }
-            else if (strcmp(buf, "year") == 0) {
+            } else if (strcmp(buf, "year") == 0) {
                 int *v = malloc(sizeof(int));
                 scanf("%d", v);
                 valores[j] = v;
-            }
-            else if (strcmp(buf, "financialLoss") == 0) {
+            } else if (strcmp(buf, "financialLoss") == 0) {
                 float *v = malloc(sizeof(float));
                 scanf("%f", v);
                 valores[j] = v;
-            }
-            else {
+            } else {
                 char tmp[256];
                 scan_quote_string(tmp);
-                char *v = malloc(strlen(tmp)+1);
+                char *v = malloc(strlen(tmp) + 1);
                 strcpy(v, tmp);
                 valores[j] = v;
             }
@@ -1685,83 +1682,79 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
 
         bool registroEncontrado = false;
 
+        /* ---------- 1) caminho com uso do índice ---------- */
         if (usaIndice) {
-            // busca direto no índice
             long long offset = buscar_arvoreB(arvb, valorChave);
             if (offset != -1) {
-                // testa todos os filtros lendo diretamente do disco
                 bool ok = true;
-                for (int j = 0; j < m; j++) {
-                    // traz ponteiro de volta ao início do registro
-                    fseek(filein, offset, SEEK_SET);
+                for (int j = 0; j < m && ok; j++) {
+                    fseek(filein, offset, SEEK_SET);     // ponteiro no byte “removido”
 
                     if (strcmp(campos[j], "idAttack") == 0) {
-                        // já está garantido pelo índice
+                        /* garantido pelo índice */
                         continue;
-                    }
-                    else if (strcmp(campos[j], "year") == 0) {
-                        // removed(1) + tamanho(4) + prox(8) + idAttack(4) -> até year
-                        fseek(filein, 1+4+8+4, SEEK_CUR);
-                        int ano;
-                        fread(&ano, sizeof(int), 1, filein);
-                        if (ano != *(int*)valores[j]) ok = false;
-                    }
-                    else if (strcmp(campos[j], "financialLoss") == 0) {
-                        // removed+tam+prox+idAttack+year -> até financialLoss
-                        fseek(filein, 1+4+8+4+4, SEEK_CUR);
-                        float loss;
-                        fread(&loss, sizeof(float), 1, filein);
-                        if (loss != *(float*)valores[j]) ok = false;
-                    }
-                    else {
-                        // campo de tamanho variável
-                        // filtrar_registroTamVar espera o ponteiro no início do registro
+                    } else if (strcmp(campos[j], "year") == 0) {
+                        fseek(filein, 1 + 4 + 8 + 4, SEEK_CUR);
+                        int ano; fread(&ano, sizeof(int), 1, filein);
+                        ok = (ano == *(int*)valores[j]);
+                    } else if (strcmp(campos[j], "financialLoss") == 0) {
+                        fseek(filein, 1 + 4 + 8 + 4 + 4, SEEK_CUR);
+                        float loss; fread(&loss, sizeof(float), 1, filein);
+                        ok = (loss == *(float*)valores[j]);
+                    } else {
                         fseek(filein, offset, SEEK_SET);
-                        char key = (strcmp(campos[j], "country")==0 ? '1' :
-                                    strcmp(campos[j], "attackType")==0 ? '2' :
-                                    strcmp(campos[j], "targetIndustry")==0 ? '3' :
-                                    /* defenseMechanism */                        '4');
-                        if (!filtrar_registroTamVar(filein, key, (char*)valores[j])) {
-                            ok = false;
-                        }
+                        char key = (strcmp(campos[j], "country")        == 0 ? '1' :
+                                    strcmp(campos[j], "attackType")      == 0 ? '2' :
+                                    strcmp(campos[j], "targetIndustry")  == 0 ? '3' : '4');
+                        ok = filtrar_registroTamVar(filein, key, (char*)valores[j]);
                     }
-                    if (!ok) break;
                 }
 
                 if (ok) {
-                    // posiciona logo após o byte de 'removido'
+                    /* ponteiro precisa ficar DEPOIS do byte “removido” */
                     fseek(filein, offset + 1, SEEK_SET);
                     imprimir_registro(filein);
                     registroEncontrado = true;
                 }
             }
+
+        /* ---------- 2) caminho de varredura completa ---------- */
         } else {
-            // varredura completa (copia da funcionalidade 3)
             fseek(filein, 17, SEEK_SET);
             int nroReg; fread(&nroReg, sizeof(int), 1, filein);
+
             if (nroReg > 0) {
                 fseek(filein, 255, SEEK_CUR);
-                fseek(filein, 0, SEEK_END);
-                long long fim = ftell(filein);
+                long long fim;
+                fseek(filein, 0, SEEK_END); fim = ftell(filein);
                 fseek(filein, 276, SEEK_SET);
+
                 while (ftell(filein) < fim) {
                     char rem; fread(&rem, 1, 1, filein);
-                    long long posReg = ftell(filein) - 1;
+                    long long posReg = ftell(filein) - 1; // byte “removido”
+
                     if (rem == '0') {
                         dados *d = ler_regdados(filein);
                         bool ok = true;
-                        for (int j = 0; j < m; j++) {
-                            if (strcmp(campos[j], "idAttack")==0 && d->idAttack != *(int*)valores[j]) ok = false;
-                            if (strcmp(campos[j], "year")==0 && d->year != *(int*)valores[j]) ok = false;
-                            if (strcmp(campos[j], "financialLoss")==0 && d->financialLoss != *(float*)valores[j]) ok = false;
-                            if (strcmp(campos[j], "country")==0 && strcmp(d->country, (char*)valores[j])!=0) ok = false;
-                            if (strcmp(campos[j], "attackType")==0 && strcmp(d->attackType, (char*)valores[j])!=0) ok = false;
-                            if (strcmp(campos[j], "targetIndustry")==0 && strcmp(d->targetIndustry, (char*)valores[j])!=0) ok = false;
-                            if (strcmp(campos[j], "defenseMechanism")==0 && strcmp(d->defenseMechanism, (char*)valores[j])!=0) ok = false;
-                            if (!ok) break;
+                        for (int j = 0; j < m && ok; j++) {
+                            if (strcmp(campos[j], "idAttack") == 0)
+                                ok = (d->idAttack == *(int*)valores[j]);
+                            else if (strcmp(campos[j], "year") == 0)
+                                ok = (d->year == *(int*)valores[j]);
+                            else if (strcmp(campos[j], "financialLoss") == 0)
+                                ok = (d->financialLoss == *(float*)valores[j]);
+                            else if (strcmp(campos[j], "country") == 0)
+                                ok = (strcmp(d->country, (char*)valores[j]) == 0);
+                            else if (strcmp(campos[j], "attackType") == 0)
+                                ok = (strcmp(d->attackType, (char*)valores[j]) == 0);
+                            else if (strcmp(campos[j], "targetIndustry") == 0)
+                                ok = (strcmp(d->targetIndustry, (char*)valores[j]) == 0);
+                            else
+                                ok = (strcmp(d->defenseMechanism, (char*)valores[j]) == 0);
                         }
+
                         if (ok) {
-                            fseek(filein, posReg, SEEK_SET);
+                            fseek(filein, posReg + 1, SEEK_SET); // <- avanço de +1 byte
                             imprimir_registro(filein);
                             registroEncontrado = true;
                         }
@@ -1774,12 +1767,11 @@ void funcao_pesquisarRegistrosArvoreB(char *nomein, char *nomearvb) { // FUNCION
             }
         }
 
-        if (!registroEncontrado) {
+        if (!registroEncontrado)
             printf("Registro inexistente.\n\n");
-        }
         printf("**********\n");
 
-        // libera filtros
+        /* ---------- libera memória dos filtros ---------- */
         for (int j = 0; j < m; j++) {
             free(campos[j]);
             free(valores[j]);
