@@ -631,7 +631,7 @@ void atualizar_registro(FILE *fp, long long int inicio_registro, int p,
         tempchar = '0';
         fwrite(&tempchar, sizeof(char), 1, fp); // escreve removido
 
-        fwrite(&tamanho_registro, sizeof(int), 1, fp); // escreve o tamanho (que neste caso é o tamanho do espaço)
+        fwrite(&novotamanho,      sizeof(int), 1, fp); // escreve o tamanho (que neste caso é o tamanho do espaço)
 
         long long int prox = -1;
         fwrite(&prox, sizeof(long long int), 1, fp); // escreve prox
@@ -1887,7 +1887,7 @@ static long long atualizarRegistroComRealoc(FILE *fpDados,
         /* sobrescreve in-place ------------------------------- */
         fseek(fpDados, offset_antigo, SEEK_SET);
         char remov = '0'; fwrite(&remov, 1, 1, fpDados);
-        fwrite(&tamAntigo, 4, 1, fpDados);
+        fwrite(&tamNovo,   4, 1, fpDados);
 
         long long prox = -1;
         fwrite(&prox, 8, 1, fpDados);
