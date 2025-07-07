@@ -1930,17 +1930,19 @@ static long long atualizarRegistroComRealoc(FILE *fpDados,
  *  A U X 2 – atualizarPR_arvoreB
  *      >> removida linha solta usando rrn antes da declaração
  * ================================================================*/
-static int atualizarPR_arvoreB(FILE *arvb,
-                               int chave,
-                               long long novoPR)
+static int atualizarPR_arvoreB(FILE *arvb, int chave, long long novoPR)
 {
-    int noRaiz;
-    fseek(arvb, 1, SEEK_SET); fread(&noRaiz, 4, 1, arvb);
+    /* lê cabeçalho ─ raiz da árvore */
+    int rrn;
+    fseek(arvb, 1, SEEK_SET);          /* pula status               */
+    fread(&rrn, sizeof(int), 1, arvb); /* noRaiz                    */
 
-    int rrn = noRaiz;
+    const long long CAB   = 44;        /* TAM_CABECALHO             */
+    const long long TAMNO = 44;        /* tamanho de cada nó        */
+
     while (rrn != -1) {
-        long long offNo = TAM_CABECALHO + (long long)rrn * TAM_NO;
-        fseek(arvb, offNo, SEEK_SET);
+        long long off = CAB + (long long)rrn * TAMNO;
+        fseek(arvb, off, SEEK_SET);
 
         int tipo, nCh, P1, C1, P2, C2, P3;
         long long PR1, PR2;
@@ -1955,22 +1957,21 @@ static int atualizarPR_arvoreB(FILE *arvb,
         fread(&P3   ,4,1,arvb);
 
         if (chave == C1) {
-            fseek(arvb, offNo + 16, SEEK_SET);      /* onde fica PR1  */
+            fseek(arvb, off + 16, SEEK_SET);     /* ponto onde fica PR1 */
             fwrite(&novoPR, 8, 1, arvb);
             return 1;
         }
         if (nCh == 2 && chave == C2) {
-            fseek(arvb, offNo + 32, SEEK_SET);      /* onde fica PR2  */
+            fseek(arvb, off + 32, SEEK_SET);     /* ponto onde fica PR2 */
             fwrite(&novoPR, 8, 1, arvb);
             return 1;
         }
-
-        /* desce na árvore */
-        if (chave < C1)              rrn = P1;
+        /* desce */
+        if (chave < C1)               rrn = P1;
         else if (nCh == 1 || chave < C2) rrn = P2;
-        else                          rrn = P3;
+        else                           rrn = P3;
     }
-    return 0;                                   /* não encontrou      */
+    return 0;  /* não achou */
 }
 
 /* ================================================================
@@ -2092,7 +2093,7 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
         }
 
         /* =====  2) varredura linear caso não use índice ===== */
-        if (!usaIndice) {
+        if (!encontrou) {
             fseek(fpDados, 276, SEEK_SET);
             long long fim; fseek(fpDados, 0, SEEK_END); fim = ftell(fpDados);
 
@@ -2125,10 +2126,15 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
                     if (ok) {
                         int chave = get_idAttack(reg);
                         long long novoOff = atualizarRegistroComRealoc(fpDados, offIni,
-                                                                        p, camposA, valoresA);
-                        if (novoOff != offIni)
-                            atualizarPR_arvoreB(arvb, chave, novoOff);
-                        encontrou = true;
+                                               p, camposA, valoresA);
+                        /* se o registro foi realocado, ajusta (ou recria) a entrada no índice */
+                        if (novoOff != offIni) {
+                            /* ‘chave’ é o idAttack do registro lido algumas linhas acima   */
+                            if (!atualizarPR_arvoreB(arvb, chave, novoOff)) {
+                                /* a chave não estava no índice (varredura linear), então reinsere */
+                                inserirNaArvoreB(arvb, chave, novoOff);
+                            }
+                        }
                     }
                     liberar_regdados(reg);
                 }
