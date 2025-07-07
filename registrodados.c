@@ -173,96 +173,55 @@ void escrever_dado(FILE *filein, FILE *fileout){ // função para escrever um re
 
 dados *ler_regdados(FILE *pos_registro)
 {
-    dados *regdados = malloc(sizeof(dados));
-    if (regdados == NULL) {
-        printf("Falha no processamento do arquivo. ");
-        exit(0);
-    }
+    /*  ───── aloca struct ───── */
+    dados *reg = malloc(sizeof(dados));
+    if (!reg) { printf("Falha no processamento do arquivo. "); exit(0); }
 
-    char  tempchar, tempstring[30];
-    int   i = 0;
+    char  tchar;              /* byte de leitura para keyword e chars do campo   */
+    char  tmp[64];            /* buffer temporário p/ campos variáveis           */
+    int   i;
 
-    /* ----------------------  campos fixos  ---------------------- */
-    fread(&regdados->tamanhoRegistro, sizeof(int),            1, pos_registro);
-    fread(&regdados->prox,             sizeof(long long int), 1, pos_registro);
-    fread(&regdados->idAttack,         sizeof(int),           1, pos_registro);
-    fread(&regdados->year,             sizeof(int),           1, pos_registro);
-    fread(&regdados->financialLoss,    sizeof(float),         1, pos_registro);
+    /*  ───── campos de tamanho fixo ───── */
+    fread(&reg->tamanhoRegistro , sizeof(int)           , 1, pos_registro);
+    fread(&reg->prox            , sizeof(long long int) , 1, pos_registro);
+    fread(&reg->idAttack        , sizeof(int)           , 1, pos_registro);
+    fread(&reg->year            , sizeof(int)           , 1, pos_registro);
+    fread(&reg->financialLoss   , sizeof(float)         , 1, pos_registro);
 
-    /* ----------------------  country (kw = '1')  ---------------- */
-    fread(&tempchar, sizeof(char), 1, pos_registro);
-    if (tempchar != '1') {
-        regdados->country = malloc(1);
-        regdados->country[0] = '\0';
-        fseek(pos_registro, -1, SEEK_CUR);
-    } else {
-        i = 0;
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-        while (tempchar != '|') {
-            tempstring[i++] = tempchar;
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-        }
-        tempstring[i]      = '\0';
-        regdados->country  = malloc(i + 1);
-        strcpy(regdados->country, tempstring);
-    }
+    /* macro auxiliar: lê um campo variável cujo código é COD */
+#define READ_VAR_FIELD(PTR, COD)                                       \
+    do {                                                               \
+        fread(&tchar, sizeof(char), 1, pos_registro);                  \
+        if (tchar != COD) {                                            \
+            PTR = malloc(1);                                           \
+            if (!PTR) { printf("Falha no processamento do arquivo. "); exit(0);}\
+            PTR[0] = '\0';                                             \
+            fseek(pos_registro, -1, SEEK_CUR); /* devolve byte lido */ \
+        } else {                                                       \
+            i = 0;                                                     \
+            fread(&tchar, sizeof(char), 1, pos_registro);              \
+            while (tchar != '|') {                                     \
+                tmp[i++] = tchar;                                      \
+                fread(&tchar, sizeof(char), 1, pos_registro);          \
+            }                                                          \
+            tmp[i] = '\0';                                             \
+            PTR = malloc(i + 1);                                       \
+            if (!PTR) { printf("Falha no processamento do arquivo. "); exit(0);}\
+            strcpy(PTR, tmp);                                          \
+        }                                                              \
+    } while (0)
 
-    /* ----------------------  attackType (kw = '2')  ------------- */
-    fread(&tempchar, sizeof(char), 1, pos_registro);
-    if (tempchar != '2') {
-        regdados->attackType = malloc(1);
-        regdados->attackType[0] = '\0';
-        fseek(pos_registro, -1, SEEK_CUR);
-    } else {
-        i = 0;
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-        while (tempchar != '|') {
-            tempstring[i++] = tempchar;
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-        }
-        tempstring[i]        = '\0';
-        regdados->attackType = malloc(i + 1);
-        strcpy(regdados->attackType, tempstring);
-    }
+    /*  ───── campos de tamanho variável ───── */
+    READ_VAR_FIELD(reg->country          , '1');
+    READ_VAR_FIELD(reg->attackType       , '2');
+    READ_VAR_FIELD(reg->targetIndustry   , '3');
+    READ_VAR_FIELD(reg->defenseMechanism , '4');
 
-    /* ----------------------  targetIndustry (kw = '3') ---------- */
-    fread(&tempchar, sizeof(char), 1, pos_registro);
-    if (tempchar != '3') {
-        regdados->targetIndustry = malloc(1);
-        regdados->targetIndustry[0] = '\0';
-        fseek(pos_registro, -1, SEEK_CUR);
-    } else {
-        i = 0;
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-        while (tempchar != '|') {
-            tempstring[i++] = tempchar;
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-        }
-        tempstring[i]           = '\0';
-        regdados->targetIndustry = malloc(i + 1);
-        strcpy(regdados->targetIndustry, tempstring);
-    }
+#undef READ_VAR_FIELD
 
-    /* ----------------------  defenseMechanism (kw = '4') -------- */
-    fread(&tempchar, sizeof(char), 1, pos_registro);
-    if (tempchar != '4') {
-        regdados->defenseMechanism = malloc(1);
-        regdados->defenseMechanism[0] = '\0';
-        fseek(pos_registro, -1, SEEK_CUR);
-    } else {
-        i = 0;
-        fread(&tempchar, sizeof(char), 1, pos_registro);
-        while (tempchar != '|') {
-            tempstring[i++] = tempchar;
-            fread(&tempchar, sizeof(char), 1, pos_registro);
-        }
-        tempstring[i]            = '\0';
-        regdados->defenseMechanism = malloc(i + 1);
-        strcpy(regdados->defenseMechanism, tempstring);
-    }
-
-    return regdados;
+    return reg;
 }
+
 
 
 void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo){ // função para atualizar os dados em um registro

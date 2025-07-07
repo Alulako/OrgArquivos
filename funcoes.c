@@ -1974,136 +1974,146 @@ static int atualizarPR_arvoreB(FILE *arvb, int chave, long long novoPR)
     return 0;  /* não achou */
 }
 
-/* ================================================================
- *  FUNCIONALIDADE 11 – funcao_atualizarArvoreB
- *    >> variável FILE* mudou de "dados" -> "fpDados".
- *    >> todas as chamadas internas ajustadas.
- * ================================================================*/
+/* ===================================================================
+ *  FUN 11  –  Atualiza registros + mantém índice B-tree sincronizado
+ * ===================================================================*/
 void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
 {
-    FILE *fpDados = fopen(nomeDados, "rb+");
-    FILE *arvb    = fopen(nomeArvb , "rb+");
-    if (!fpDados || !arvb) {
+    FILE *fpDados = fopen(nomeDados, "rb+");   /*  <<<  nome trocado   */
+    FILE *fpArvb  = fopen(nomeArvb , "rb+");
+    if (!fpDados || !fpArvb) {
         printf("Falha no processamento do arquivo. ");
         exit(0);
     }
 
     modificar_status(fpDados, true);
-    modificar_status(arvb   , true);
+    modificar_status(fpArvb , true);
 
-    int n; scanf("%d", &n);                       /* nº de operações */
+    int n;  scanf("%d", &n);                         /* nº de operações */
 
     for (int op = 0; op < n; op++) {
-        /* ----------  lê filtros de busca  ---------- */
-        int m; scanf("%d", &m);
-        char  **camposB  = malloc(m * sizeof(char*));
-        void  **valoresB = malloc(m * sizeof(void*));
+        /* ---------- filtros de busca ---------- */
+        int m;  scanf("%d", &m);
 
-        bool usaIndice = false;   /* tem idAttack no filtro? */
+        char **camposB  = malloc(m * sizeof(char*));
+        void **valoresB = malloc(m * sizeof(void*));
+
+        bool usaIndice  = false;
         int  chaveBusca = -1;
 
         for (int i = 0; i < m; i++) {
-            char nome[17]; scanf(" %16s", nome);
+            char nome[17];  scanf(" %16s", nome);
             camposB[i] = strdup(nome);
 
-            if (!strcmp(nome,"idAttack")) {
-                int *v = malloc(sizeof(int)); scanf("%d", v);
-                valoresB[i] = v; usaIndice = true; chaveBusca = *v;
-            }
-            else if (!strcmp(nome,"year")) {
-                int *v = malloc(sizeof(int)); scanf("%d", v);
+            if (!strcmp(nome, "idAttack")) {
+                int *v = malloc(sizeof(int));  scanf("%d", v);
                 valoresB[i] = v;
-            }
-            else if (!strcmp(nome,"financialLoss")) {
-                float *v = malloc(sizeof(float)); scanf("%f", v);
+                usaIndice   = true;
+                chaveBusca  = *v;
+            } else if (!strcmp(nome, "year")) {
+                int *v = malloc(sizeof(int));  scanf("%d", v);
                 valoresB[i] = v;
-            }
-            else {                                 /* string */
-                char buf[256]; scan_quote_string(buf);
+            } else if (!strcmp(nome, "financialLoss")) {
+                float *v = malloc(sizeof(float));  scanf("%f", v);
+                valoresB[i] = v;
+            } else {                             /* campo string */
+                char buf[256];  scan_quote_string(buf);
                 valoresB[i] = strdup(buf);
             }
         }
 
-        /* ----------  lê lista de alterações ---------- */
-        int p; scanf("%d", &p);
-        char  **camposA  = malloc(p * sizeof(char*));
-        void  **valoresA = malloc(p * sizeof(void*));
+        /* ---------- lista de alterações ---------- */
+        int p;  scanf("%d", &p);
+
+        char **camposA  = malloc(p * sizeof(char*));
+        void **valoresA = malloc(p * sizeof(void*));
 
         for (int i = 0; i < p; i++) {
-            char nome[17]; scanf(" %16s", nome);
+            char nome[17];  scanf(" %16s", nome);
             camposA[i] = strdup(nome);
 
-            if (!strcmp(nome,"idAttack") || !strcmp(nome,"year")) {
-                char buf[32]; scan_quote_string(buf);
+            if (!strcmp(nome, "idAttack") || !strcmp(nome, "year")) {
+                char buf[32];  scan_quote_string(buf);
                 int *v = malloc(sizeof(int));
-                *v = buf[0] ? strtol(buf,NULL,10) : -1;
+                *v = buf[0] ? strtol(buf, NULL, 10) : -1;
                 valoresA[i] = v;
-            }
-            else if (!strcmp(nome,"financialLoss")) {
-                char buf[32]; scan_quote_string(buf);
+            } else if (!strcmp(nome, "financialLoss")) {
+                char buf[32];  scan_quote_string(buf);
                 float *v = malloc(sizeof(float));
-                *v = buf[0] ? strtof(buf,NULL) : -1.0;
+                *v = buf[0] ? strtof(buf, NULL) : -1.0f;
                 valoresA[i] = v;
-            }
-            else {
-                char buf[256]; scan_quote_string(buf);
+            } else {                              /* string */
+                char buf[256];  scan_quote_string(buf);
                 valoresA[i] = strdup(buf);
             }
         }
 
-        /* ----------  procura + atualiza  ---------- */
+        /* ---------- procura + atualiza ---------- */
         bool encontrou = false;
 
-        /* =====  1) tenta via índice  ===== */
+        /* ===== 1) tenta via índice ===== */
         if (usaIndice) {
-            long long off = buscar_arvoreB(arvb, chaveBusca);
+            long long off = buscar_arvoreB(fpArvb, chaveBusca);
             if (off != -1) {
                 /* verifica se o registro satisfaz TODOS os filtros */
                 bool ok = true;
                 for (int i = 0; i < m && ok; i++) {
-                    if (!strcmp(camposB[i],"idAttack")) continue;      /* já garantido */
+                    if (!strcmp(camposB[i], "idAttack")) continue;   /* já garantido */
                     fseek(fpDados, off, SEEK_SET);
 
-                    if (!strcmp(camposB[i],"year")) {
-                        fseek(fpDados, 1+4+8+4, SEEK_CUR);
-                        int yr; fread(&yr,4,1,fpDados);
+                    if (!strcmp(camposB[i], "year")) {
+                        fseek(fpDados, 1 + 4 + 8 + 4, SEEK_CUR);
+                        int yr;  fread(&yr, 4, 1, fpDados);
                         ok = (yr == *(int*)valoresB[i]);
-                    }
-                    else if (!strcmp(camposB[i],"financialLoss")) {
-                        fseek(fpDados, 1+4+8+4+4, SEEK_CUR);
-                        float fl; fread(&fl,4,1,fpDados);
+                    } else if (!strcmp(camposB[i], "financialLoss")) {
+                        fseek(fpDados, 1 + 4 + 8 + 4 + 4, SEEK_CUR);
+                        float fl;  fread(&fl, 4, 1, fpDados);
                         ok = (fl == *(float*)valoresB[i]);
-                    }
-                    else {
-                        char kw = (!strcmp(camposB[i],"country")? '1':
-                                   !strcmp(camposB[i],"attackType")? '2':
-                                   !strcmp(camposB[i],"targetIndustry")? '3':'4');
+                    } else {
+                        char kw = (!strcmp(camposB[i],"country")       ? '1' :
+                                   !strcmp(camposB[i],"attackType")     ? '2' :
+                                   !strcmp(camposB[i],"targetIndustry") ? '3' : '4');
                         ok = filtrar_registroTamVar(fpDados, kw, (char*)valoresB[i]);
                     }
                 }
 
                 if (ok) {
                     long long novoOff = atualizarRegistroComRealoc(fpDados, off,
-                                                                    p, camposA, valoresA);
-                    if (novoOff != off)          /* registro “andou” */
-                        atualizarPR_arvoreB(arvb, chaveBusca, novoOff);
+                                                                   p, camposA, valoresA);
+
+                    /* trata possível mudança de idAttack */
+                    int novoId = chaveBusca;
+                    for (int t = 0; t < p; t++)
+                        if (!strcmp(camposA[t], "idAttack"))
+                            novoId = *((int*)valoresA[t]);
+
+                    if (novoId == chaveBusca) {              /* id não mudou */
+                        if (novoOff != off) {
+                            if (!atualizarPR_arvoreB(fpArvb, chaveBusca, novoOff))
+                                inserirNaArvoreB(fpArvb, chaveBusca, novoOff);
+                        }
+                    } else {                                 /* id mudou     */
+                        inserirNaArvoreB(fpArvb, novoId, novoOff);
+                    }
+
                     encontrou = true;
                 }
             }
         }
 
-        /* =====  2) varredura linear caso não use índice ===== */
-        if (!encontrou) {
+        /* ===== 2) varredura linear caso índice não sirva ===== */
+        if (!encontrou && !usaIndice) {
             fseek(fpDados, 276, SEEK_SET);
-            long long fim; fseek(fpDados, 0, SEEK_END); fim = ftell(fpDados);
+            long long fim;  fseek(fpDados, 0, SEEK_END);  fim = ftell(fpDados);
 
             while (ftell(fpDados) < fim) {
-                char rem; fread(&rem,1,1,fpDados);
+                char rem;  fread(&rem, 1, 1, fpDados);
                 long long offIni = ftell(fpDados) - 1;
 
                 if (rem == '0') {
-                    dados *reg = ler_regdados(fpDados);      /* já avança ponteiro */
+                    dados *reg = ler_regdados(fpDados);     /* já avança ponteiro */
 
+                    /* confere filtros */
                     bool ok = true;
                     for (int i = 0; i < m && ok; i++) {
                         if (!strcmp(camposB[i],"idAttack"))
@@ -2117,42 +2127,54 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
                         else if (!strcmp(camposB[i],"attackType"))
                             ok = !strcmp(get_attackType(reg), (char*)valoresB[i]);
                         else if (!strcmp(camposB[i],"targetIndustry"))
-                            ok = !strcmp(get_targetIndustry(reg), (char*)valoresB[i]);
-                        else /* defenseMechanism */
-                            ok = !strcmp(get_defenseMechanism(reg),
-                                         (char*)valoresB[i]);
+                            ok = !strcmp(get_targetIndustry(reg),(char*)valoresB[i]);
+                        else
+                            ok = !strcmp(get_defenseMechanism(reg),(char*)valoresB[i]);
                     }
 
                     if (ok) {
-                        int chave = get_idAttack(reg);
-                        long long novoOff = atualizarRegistroComRealoc(fpDados, offIni,
-                                               p, camposA, valoresA);
-                        /* se o registro foi realocado, ajusta (ou recria) a entrada no índice */
-                        if (novoOff != offIni) {
-                            /* ‘chave’ é o idAttack do registro lido algumas linhas acima   */
-                            if (!atualizarPR_arvoreB(arvb, chave, novoOff)) {
-                                /* a chave não estava no índice (varredura linear), então reinsere */
-                                inserirNaArvoreB(arvb, chave, novoOff);
+                        long long novoOff =
+                            atualizarRegistroComRealoc(fpDados, offIni,
+                                                       p, camposA, valoresA);
+
+                        int antigaId = get_idAttack(reg);
+                        int novoId   = antigaId;
+                        for (int t = 0; t < p; t++)
+                            if (!strcmp(camposA[t], "idAttack"))
+                                novoId = *((int*)valoresA[t]);
+
+                        if (novoId == antigaId) {            /* id não mudou */
+                            if (novoOff != offIni) {
+                                if (!atualizarPR_arvoreB(fpArvb, antigaId, novoOff))
+                                    inserirNaArvoreB(fpArvb, antigaId, novoOff);
                             }
+                        } else {                             /* id mudou     */
+                            inserirNaArvoreB(fpArvb, novoId, novoOff);
                         }
+
+                        encontrou = true;
+                        liberar_regdados(reg);
+                        break;                              /* pára no 1º */
                     }
                     liberar_regdados(reg);
-                }
-                else {
-                    int tam; fread(&tam,4,1,fpDados);
+                } else {                                   /* registro removido */
+                    int tam; fread(&tam, 4, 1, fpDados);
                     fseek(fpDados, tam, SEEK_CUR);
                 }
             }
         }
-        /* ---- libera vetores ---- */
-        for (int i = 0; i < m; i++){ free(camposB[i]); free(valoresB[i]); }
-        for (int i = 0; i < p; i++){ free(camposA[i]); free(valoresA[i]); }
-        free(camposB); free(valoresB); free(camposA); free(valoresA);
+
+        /* ---------- libera vetores ---------- */
+        for (int i = 0; i < m; i++) { free(camposB[i]);  free(valoresB[i]); }
+        for (int i = 0; i < p; i++) { free(camposA[i]);  free(valoresA[i]); }
+        free(camposB);  free(valoresB);
+        free(camposA);  free(valoresA);
     }
 
     modificar_status(fpDados, false);
-    modificar_status(arvb   , false);
-    fclose(fpDados); fclose(arvb);
+    modificar_status(fpArvb , false);
+    fclose(fpDados);
+    fclose(fpArvb);
 
     binarioNaTela(nomeDados);
     binarioNaTela(nomeArvb);
