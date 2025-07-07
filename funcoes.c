@@ -650,22 +650,22 @@ void atualizar_registro(FILE *fp, long long int inicio_registro, int p,
         campovar = get_country(regdados);
 
         if(campovar[0]) // caso country exista, escreve 
-            escrever_campoTamVar(fp, campovar, 1);
+            escrever_campoTamVar(fp, campovar, '1');
 
         campovar = get_attackType(regdados);
 
         if(campovar[0]) // caso attackType exista, escreve 
-            escrever_campoTamVar(fp, campovar, 2);
+            escrever_campoTamVar(fp, campovar, '2');
 
         campovar = get_targetIndustry(regdados);
 
         if(campovar[0]) // caso targetIndustry exista, escreve 
-            escrever_campoTamVar(fp, campovar, 3);
+            escrever_campoTamVar(fp, campovar, '3');
 
         campovar = get_defenseMechanism(regdados);
 
         if(campovar[0]) // caso defenseMechanism exista, escreve 
-            escrever_campoTamVar(fp, campovar, 4);
+            escrever_campoTamVar(fp, campovar, '4');
 
         int sobra = tamanho_registro - novotamanho; // calcula sobra do lixo
 
@@ -2144,10 +2144,6 @@ void funcao_atualizarArvoreB(char *nomeDados, char *nomeArvb)
                 }
             }
         }
-
-        if (!encontrou)
-            printf("Registro inexistente.\n\n");
-
         /* ---- libera vetores ---- */
         for (int i = 0; i < m; i++){ free(camposB[i]); free(valoresB[i]); }
         for (int i = 0; i < p; i++){ free(camposA[i]); free(valoresA[i]); }
