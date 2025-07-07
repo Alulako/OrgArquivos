@@ -129,14 +129,15 @@ dados *criar_dado(FILE *filein){ // função para criar uma struct do registro d
 
 }
 
-void escrever_campoTamVar(FILE *fp, char *campo, char keyword){ // função para escrever um campo de tamanho variavel no arquivo binario
+void escrever_campoTamVar(FILE *fp, char *campo, char keyword){
+    /* --- converte 0-9 -> '0'-'9' se vier como inteiro --- */
+    if (keyword >= 0 && keyword <= 9) keyword += '0';
 
     char delimcampo = '|';
 
-    fwrite(&keyword, sizeof(char), 1, fp); // escreve keyword
-    fwrite(campo, sizeof(char), strlen(campo), fp); // escreve campo
-    fwrite(&delimcampo, sizeof(char), 1, fp); // escreve delimitador
-
+    fwrite(&keyword, sizeof(char), 1, fp);         /* keyword */
+    fwrite(campo,    sizeof(char), strlen(campo), fp);
+    fwrite(&delimcampo, sizeof(char), 1, fp);      /* delimitador */
 }
 
 void escrever_dado(FILE *filein, FILE *fileout){ // função para escrever um registro de dados no arquivo binario
