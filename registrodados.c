@@ -171,32 +171,28 @@ void escrever_dado(FILE *filein, FILE *fileout){ // função para escrever um re
 
 }
 
-dados *ler_regdados(FILE *pos_registro) {
+dados *ler_regdados(FILE *pos_registro)
+{
     dados *regdados = malloc(sizeof(dados));
     if (regdados == NULL) {
         printf("Falha no processamento do arquivo. ");
         exit(0);
     }
 
-    char tempchar, tempstring[30];
-    int i = 0;
+    char  tempchar, tempstring[30];
+    int   i = 0;
 
-    // ====================
-    // Campos fixos:
-    // ====================
-    fread(&regdados->tamanhoRegistro, sizeof(int),           1, pos_registro);
-    fread(&regdados->prox,             sizeof(long long int),1, pos_registro);
+    /* ----------------------  campos fixos  ---------------------- */
+    fread(&regdados->tamanhoRegistro, sizeof(int),            1, pos_registro);
+    fread(&regdados->prox,             sizeof(long long int), 1, pos_registro);
     fread(&regdados->idAttack,         sizeof(int),           1, pos_registro);
     fread(&regdados->year,             sizeof(int),           1, pos_registro);
     fread(&regdados->financialLoss,    sizeof(float),         1, pos_registro);
 
-    // ====================
-    // country (keyword '1')
-    // ====================
+    /* ----------------------  country (kw = '1')  ---------------- */
     fread(&tempchar, sizeof(char), 1, pos_registro);
     if (tempchar != '1') {
         regdados->country = malloc(1);
-        if (!regdados->country) { printf("Falha no processamento do arquivo. "); exit(0); }
         regdados->country[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
     } else {
@@ -206,20 +202,15 @@ dados *ler_regdados(FILE *pos_registro) {
             tempstring[i++] = tempchar;
             fread(&tempchar, sizeof(char), 1, pos_registro);
         }
-        tempstring[i] = '\0';
-        regdados->country = malloc(i + 1);
-        if (!regdados->country) { printf("Falha no processamento do arquivo. "); exit(0); }
+        tempstring[i]      = '\0';
+        regdados->country  = malloc(i + 1);
         strcpy(regdados->country, tempstring);
-        i = 0;
     }
 
-    // ====================
-    // attackType (keyword '2')
-    // ====================
+    /* ----------------------  attackType (kw = '2')  ------------- */
     fread(&tempchar, sizeof(char), 1, pos_registro);
     if (tempchar != '2') {
         regdados->attackType = malloc(1);
-        if (!regdados->attackType) { printf("Falha no processamento do arquivo. "); exit(0); }
         regdados->attackType[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
     } else {
@@ -229,20 +220,15 @@ dados *ler_regdados(FILE *pos_registro) {
             tempstring[i++] = tempchar;
             fread(&tempchar, sizeof(char), 1, pos_registro);
         }
-        tempstring[i] = '\0';
+        tempstring[i]        = '\0';
         regdados->attackType = malloc(i + 1);
-        if (!regdados->attackType) { printf("Falha no processamento do arquivo. "); exit(0); }
         strcpy(regdados->attackType, tempstring);
-        i = 0;
     }
 
-    // ====================
-    // targetIndustry (keyword '3')
-    // ====================
+    /* ----------------------  targetIndustry (kw = '3') ---------- */
     fread(&tempchar, sizeof(char), 1, pos_registro);
     if (tempchar != '3') {
         regdados->targetIndustry = malloc(1);
-        if (!regdados->targetIndustry) { printf("Falha no processamento do arquivo. "); exit(0); }
         regdados->targetIndustry[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
     } else {
@@ -252,20 +238,15 @@ dados *ler_regdados(FILE *pos_registro) {
             tempstring[i++] = tempchar;
             fread(&tempchar, sizeof(char), 1, pos_registro);
         }
-        tempstring[i] = '\0';
+        tempstring[i]           = '\0';
         regdados->targetIndustry = malloc(i + 1);
-        if (!regdados->targetIndustry) { printf("Falha no processamento do arquivo. "); exit(0); }
         strcpy(regdados->targetIndustry, tempstring);
-        i = 0;
     }
 
-    // ====================
-    // defenseMechanism (keyword '4')
-    // ====================
+    /* ----------------------  defenseMechanism (kw = '4') -------- */
     fread(&tempchar, sizeof(char), 1, pos_registro);
     if (tempchar != '4') {
         regdados->defenseMechanism = malloc(1);
-        if (!regdados->defenseMechanism) { printf("Falha no processamento do arquivo. "); exit(0); }
         regdados->defenseMechanism[0] = '\0';
         fseek(pos_registro, -1, SEEK_CUR);
     } else {
@@ -275,15 +256,14 @@ dados *ler_regdados(FILE *pos_registro) {
             tempstring[i++] = tempchar;
             fread(&tempchar, sizeof(char), 1, pos_registro);
         }
-        tempstring[i] = '\0';
+        tempstring[i]            = '\0';
         regdados->defenseMechanism = malloc(i + 1);
-        if (!regdados->defenseMechanism) { printf("Falha no processamento do arquivo. "); exit(0); }
         strcpy(regdados->defenseMechanism, tempstring);
-        i = 0;
     }
 
     return regdados;
 }
+
 
 void atualizar_regdados(dados *regdados, char *nomecampo, void *valorcampo){ // função para atualizar os dados em um registro
 
